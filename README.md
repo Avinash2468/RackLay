@@ -1,9 +1,9 @@
 # Racklay: Multi-Layer  Layout  Estimation  for  Warehouse  Racks
-#### Meher Shashwat Nigam, Avinash Prabhu, Anurag Sahu, Puru Gupta, Tanvi Karandikar, N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
+#### [Meher Shashwat Nigam](https://web.iiit.ac.in/~meher.shashwat/home.html), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
-#### [Paper](https://arxiv.org/abs/2002.08394), [Video](https://www.youtube.com/watch?v=HcroGyo6yRQ)
+<!-- #### [Paper](https://arxiv.org/abs/2002.08394), [Video](https://www.youtube.com/watch?v=HcroGyo6yRQ) -->
 
-#### Accepted to [WACV 2020](http://wacv20.wacv.net/)
+<!-- #### Accepted to [WACV 2020](http://wacv20.wacv.net/) -->
 
 <p align="center">
     <img src="assets/teaser.png" />
@@ -28,7 +28,7 @@ Multi-layered scene layout estimation from a single image @ >14 fps*
 * More importantly, we open-source the flexible data generation pipeline *WareSynth*, along with relevant instructions that enable the researcher/user to create and customize their own warehouse scenes and generate 2D/3D ground truth annotations needed for their task automatically *WareSynth*. This does not restrict or limit the user to our dataset alone but provides for possibilities to create new datasets with the ability to customize as desired.
 
 * We show tangible performance gain compared to other baseline architectures dovetailed and adapted to the problem of rack layout estimation. Moreover, we tabulate a number of ablations across  architectural variants which establish the efficacy and superiority of *RackLay*.
-
+<!-- 
 ## Repository Structure
 
 ```
@@ -62,24 +62,14 @@ pip install -r requirements.txt
 
 
 
-## Datasets
+## Dataset
 
 In the paper, we've presented results for KITTI 3Dobject, KITTI Odometry, KITTI RAW and Argoverse 3D Tracking v1.0 datasets. For comparision with [Schulter et. al.](https://cseweb.ucsd.edu/~mkchandraker/pdf/eccv18_occlusionreasoning.pdf), We've used the same training and test splits sequences from the KITTI RAW dataset. For more details about the training/testing splits one can look at the `splits` directory. 
 
 ```
 
-# Download KITTI RAW
-./data/download_datasets.sh raw
-
-# Download KITTI 3D Object
-./data/download_datasets.sh object
-
-# Download KITTI Odometry
-./data/download_datasets.sh odometry
-  
-# Download Argoverse Tracking v1.0
-./data/download_datasets.sh argoverse
-```
+# Download *RackLay* Data
+http://bit.ly/racklay-dataset
 
 The above scripts will download, unzip and store the respective datasets in the `data` directory. 
 
@@ -220,4 +210,4 @@ If you find this work useful, please use the following BibTeX entry for citing u
   pages={1689--1697},
   year={2020}
 }
-```
+``` -->
