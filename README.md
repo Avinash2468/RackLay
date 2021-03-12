@@ -66,11 +66,9 @@ pip install -r requirements.txt
 
 The *RackLay* dataset consists of two types of files- complex_12k.zip and simple_8k.zip for the complex and simple datasets as explained in the paper. We've presented results for complex *RackLay* dataset. 
 
-```
+## Download *RackLay* Dataset
 
-# Download *RackLay* Dataset
 http://bit.ly/racklay-dataset
-
 
 
 ## Understanding the dataset structure
@@ -121,7 +119,6 @@ python test.py --image_path <path to the image directory> --out_dir <path to the
 ## Evaluation
 
 For evaluating a trained model use `eval.py` by specifying the mode used for training, the data split on which to evaluate as well as the path to the trained model directory. 
-```
 
 ```
 python eval.py --data_path ./data  --pretrained_path <path to the model directory>  --split warehouse --num_rack 4 --type <single/both> --occ_map_size 512
