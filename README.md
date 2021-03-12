@@ -73,10 +73,14 @@ http://bit.ly/racklay-dataset
 
 ## Understanding the dataset structure
 
+```
+
 ├── Dataset
    ├── RGB Images
    ├── Top View Layouts
    ├── Front View Layouts
+
+```
 
 1. RGB Images- Images of size 470 x 280 x 3. They range between 000000.png to 011999.png. This can change depending on the data you may choose to generate using *WareSynth*
 
