@@ -1,8 +1,8 @@
 # Racklay: Multi-Layer  Layout  Estimation  for  Warehouse  Racks
 #### [Meher Shashwat Nigam](https://web.iiit.ac.in/~meher.shashwat/home.html), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
-<!-- #### [Paper](https://arxiv.org/abs/2002.08394), [Video](https://www.youtube.com/watch?v=HcroGyo6yRQ) -->
-
+####  [Video]( https://youtu.be/1hdl3W-MlXo)
+<!-- [Paper](https://arxiv.org/abs/2002.08394) -->
 <!-- #### Accepted to [WACV 2020](http://wacv20.wacv.net/) -->
 
 <p align="center">
@@ -28,22 +28,25 @@ Multi-layered scene layout estimation from a single image @ >14 fps*
 * More importantly, we open-source the flexible data generation pipeline *WareSynth*, along with relevant instructions that enable the researcher/user to create and customize their own warehouse scenes and generate 2D/3D ground truth annotations needed for their task automatically *WareSynth*. This does not restrict or limit the user to our dataset alone but provides for possibilities to create new datasets with the ability to customize as desired.
 
 * We show tangible performance gain compared to other baseline architectures dovetailed and adapted to the problem of rack layout estimation. Moreover, we tabulate a number of ablations across  architectural variants which establish the efficacy and superiority of *RackLay*.
-<!-- 
+
 ## Repository Structure
 
 ```
-Racklay/
-├── data
-│   └── osm              # Contains OSM maps constituting the true data distribution for roads
-├── racklay           # Contains scripts for dataloaders and network/model architecture
-├── preprocessing        
-│   ├── argoverse        # Contains scripts for generating weak supervision and groundtruth for Argoverse Tracking dataset
-│   └── kitti            # Contains scripts for generating weak supervision and groundtruth for KITTI datasets
-└── splits
-    ├── 3Dobject         # Training and testing splits for KITTI 3DObject Detection dataset 
-    ├── argo             # Training and testing splits for Argoverse Tracking v1.0 dataset
-    ├── odometry         # Training and testing splits for KITTI Odometry dataset
-    └── raw              # Training and testing splits for KITTI RAW dataset(based on Schulter et. al.)
+├── data # Store the *RackLay* data or custom data using *WareSynth* here.
+├── racklay
+│   ├── dataloader.py # Reading the data from the dataset and preparing it for training
+│   ├── datasets.py
+│   ├── __init__.py
+│   ├── model.py # RackLay architecture defined here
+│   └── resnet_encoder.py 
+├── splits
+│   └── warehouse
+│       ├── train_files.txt # Indices to files from the dataset used for training
+│       └── val_files.txt # Indices to files from the dataset used for validation
+├── eval.py # Get metrics (mIOU and mAP) 
+├── test.py # Get outputs on any required RGB images
+├── train.py
+└── utils.py 
 ```
 
 
@@ -53,95 +56,52 @@ Racklay/
 We recommend setting up a Python 3.7 Virtual Environment and installing all the dependencies listed in the requirements file. 
 
 ```
-git clone https://github.com/hbutsuak95/monolayout.git
+git clone https://github.com/Avinash2468/RackLay
 
-cd monolayout
+cd RackLay
 pip install -r requirements.txt
 ```
 
-
-
-
 ## Dataset
 
-In the paper, we've presented results for KITTI 3Dobject, KITTI Odometry, KITTI RAW and Argoverse 3D Tracking v1.0 datasets. For comparision with [Schulter et. al.](https://cseweb.ucsd.edu/~mkchandraker/pdf/eccv18_occlusionreasoning.pdf), We've used the same training and test splits sequences from the KITTI RAW dataset. For more details about the training/testing splits one can look at the `splits` directory. 
+The *RackLay* dataset consists of two types of files- complex_12k.zip and simple_8k.zip for the complex and simple datasets as explained in the paper. We've presented results for complex *RackLay* dataset. 
 
 ```
 
-# Download *RackLay* Data
+# Download *RackLay* Dataset
 http://bit.ly/racklay-dataset
 
-The above scripts will download, unzip and store the respective datasets in the `data` directory. 
 
 
-## Preprocessing
+## Understanding the dataset structure
 
-Training data for static and dynamic layouts are generated separately. For generating dynamic layout we use the 3D bounding box information provided with the KITTI 3Dobject detection dataset and project it to the bird's eye view. For generating static layouts, we project 2D segmentation(using [inplace-abn](https://github.com/mapillary/inplace_abn)) onto the raw lidar points to obtain the lidar segmentation. We then make use of odometry information to register these lidar points and finally project them in bird's eye view. We also provide already generated 2D segmentation using `inplace_abn` for KITTI RAW and Argoverse Tracking v1.0 dataset [here](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/EgvDW4T0gldEjzI_9WUcpEAB63W_NH2o7lcTDyqfU-gl7Q?e=L2eYd6).
+├── Dataset
+   ├── RGB Images
+   ├── Top View Layouts
+   ├── Front View Layouts
 
+1. RGB Images- Images of size 470 x 280 x 3. They range between 000000.png to 011999.png. This can change depending on the data you may choose to generate using *WareSynth*
 
+2. Top View Layouts- NPY files of size max_no_of_shelves x occ_map_size x occ_map_size. 
 
-### Weak Supervision(Static Layout)
+    - Here max_no_of_shelves represents the maximum number of shelves present in the dataset. In the complex_12k.zip case, it is 4. In the case a given datapoint has a rack with < max_no_of_shelves, those channels would be given 0 values.
 
-As proposed in the paper, training data for static layouts can be generated by projecting 2D segmentation onto the lidar space to obtain the lidar segmentation and using the odometry information to register the lidar segmentation over multiple frames and finally projecting it onto the bird's eye view. The following code generates the weak supervision over the entire dataset for both KITTI RAW and Argoverse Tracking dataset. We also provide support for generating supervision for any particular KITTI RAW sequence to enable extension of our work to other KITTI sequences/datasets not used in the paper. For generating training and validation data for Argoverse Tracking dataset we make use of the [argoverse-api](https://github.com/argoai/argoverse-api.git). For KITTI Odometry dataset, we make use of [semanticKITTI](http://semantic-kitti.org/) which provides labelled 3D Lidar segmentation, this helps us in generating much smoother supervision. Already generated static weak supervision for KITTI RAW, KITTI Odometry and Argoverse datasets can be found [here](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/EuyvjAZzO4xAlCnekbfU5_4B3I3Ek29uB9N4qWdcZe65mQ?e=kyWcdz).
+    - here occ_map_size represents the size of the layout itself. For the case of complex_12k.zip, it is 512.
 
-```
-# Generating Weak Static Layouts for a KITTI RAW sequence
-./preprocessing/kitti/generate_supervision.py --base_path ../data/raw/ --seg_class road --date 2011_09_26 --sequence 0001 --range 40 --occ_map_size 256
-
-# Generating Weak Static Layouts for the entire KITTI RAW dataset
-./preprocessing/kitti/generate_supervision.py --base_path ../data/raw/ --seg_class road --process all --range 40 --occ_map_size 256
-
-# Generating Weak Static Layouts for the entire Argoverse Tracking v1.0 dataset
-./preprocessing/argoverse/generate_weak_supervision.py --base_path ../data/argoverse/argoverse-tracking --seg_class road --occ_map_size 256 --range 40 
-```
-<p align="center">
-    <img src="assets/dataprep.png" />
-</p>
-
-
-
-### GroundTruth(Static and Dynamic Layouts)
-
-In order to generate groundtruth bird's eye view layouts, we rely on labelled 3D bounding boxes as well as groundtruth lane polygon information provided with the Argoverse Tracking dataset through [argoverse-api](https://github.com/argoai/argoverse-api.git). KITTI 3DObject detection dataset also provides the groundtruth 3D bounding box labels, which we use to obtain dynamic layouts in bird's eye view. For KITTI RAW and KITTI Odometry datasets, we manually annotate static layouts in bird's eye view. We provide already generated static and dynamic layout groundtruths for respective datasets [here](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/EqScIV6AWMZAgh7e0fEzFkQBPAoEGBEU4qzVsToJu-6cNw?e=VZ8v1W).
-
-
-```
-# Generating Dynamic Layouts for KITTI 3Dobject detection dataset (GroundTruth)
-./preprocessing/kitti/generate_supervision.py --base_path ../data/object/training/label_2 --seg_class vehicle --range 40 --occ_map_size 256
-
-# Generating Dynamic Layouts for Argoverse Tracking v1.0 dataset (GroundTruth)
-./preprocessing/argoverse/generate_groundtruth.py --base_path ../data/argoverse/argoverse-tracking --seg_class vehicle --range 40 --occ_map_size 256 
-
-# Generating Static Layouts for Argoverse Tracking v1.0 dataset (GroundTruth)
-./preprocessing/argoverse/generate_groundtruth.py --base_path ../data/argoverse/argoverse-tracking --seg_class road --range 40 --occ_map_size 256 
-
-```
-
-For more details, See [preprocessing/kitti/README.md](preprocessing/kitti/README.md) and [preprocessing/argoverse/README.md](preprocessing/argoverse/README.md)
-
+3. Front View Layouts follow the same structure as Top View Layouts, except that they contain front views. 
 
 ## Training
 
-Example code for training MonoLayout on different datasets in respective modes are provided below. Run the script with `--help` or `-h` flag to know more about the command line arguments that can be used to set precise training parameters.
+Example code for training Racklay on different datasets in respective modes are provided below. Run the script with `--help` or `-h` flag to know more about the command line arguments that can be used to set precise training parameters.
 
 
 ```
 
-# Monolayout Static (KITTI Odometry)
-python3 train.py --type static --split odometry --data_path ./data/odometry/sequences/ --height 1024 --width 1024 --occ_map_size 256
+# RackLay-D-disc (for top and front views)
+python train.py --type both --batch_size 32 --num_epochs 251 --split warehouse --data_path ./data --num_racks 4 --log_frequency 50 --occ_map_size 512
 
-# Monolayout Dynamic (KITTI 3DObject)
-python3 train.py --type dynamic --split 3Dobject --data_path ./data/object/training/ --height 1024 --width 1024 --occ_map_size 256
-
-# Monolayout Static (KITTI RAW)
-python3 train.py --type static --split raw --data_path ./data/raw/ --height 1024 --width 1024 --occ_map_size 256
-
-# Monolayout Dynamic (Argoverse Tracking v1.0)
-python3 train.py --type dynamic --split argo --data_path ./data/argoverse/ --height 1024 --width 1024 --occ_map_size 256
-
-# Monolayout Static (Argoverse Tracking v1.0)
-python3 train.py --type static --split argo --data_path ./data/argoverse/ --height 1024 --width 1024 --occ_map_size 256
-
+# RackLay-S-disc (for either top view or front view)
+python train.py --type single --batch_size 32 --num_epochs 251 --split warehouse --data_path ./data --num_racks <max_no_of_shelves> --log_frequency 50 --occ_map_size 512
 
 
 ```
@@ -152,62 +112,27 @@ python3 train.py --type static --split argo --data_path ./data/argoverse/ --heig
 To generate layouts predicted by a particular trained model, use the `test.py` code and specify specific the mode of training as well as the path to the model directory. Also specify the input image directory as well as the output directory where the predictions will be saved.  
 
 ```
-python3 test.py --type <static/dynamic> --model_path <path to the model directory> --image_path <path to the image directory>  --out_dir <path to the output directory> 
+
+python test.py --image_path <path to the image directory> --out_dir <path to the output directory>  --model_path <path to the model directory>  --num_racks <max_no_of_shelves> --type <single/both> --occ_map_size 512
+
 
 ```
 
 ## Evaluation
 
 For evaluating a trained model use `eval.py` by specifying the mode used for training, the data split on which to evaluate as well as the path to the trained model directory. 
-
-
-```
-# Evaluate on KITTI Odometry 
-python3 eval.py --type static --split odometry --model_path <path to the model directory> --data_path ./data/odometry/sequences --height 512 --width 512 --occ_map_size 128
-
-# Evaluate on KITTI 3DObject
-python3 eval.py --type dynamic --split 3Dobject --model_path <path to the model directory> --data_path ./data/object/training
-
-# Evaluate on KITTI RAW
-python3 eval.py --type static --split raw --model_path <path to the model directory> --data_path ./data/raw/
-
-# Evaluate on Argoverse Tracking v1.0 (Static)
-python3 eval.py --type static --split argo --model_path <path to the model directory> --data_path ./data/argoverse/
-
-# Evaluate on Argoverse Tracking v1.0 (Dynamic)
-python3 eval.py --type dynamic --split argo --model_path <path to the model directory> --data_path ./data/argoverse
 ```
 
-## Pretrained Models
+```
+python eval.py --data_path ./data  --pretrained_path <path to the model directory>  --split warehouse --num_rack 4 --type <single/both> --occ_map_size 512
 
-The following table provides links to the pretrained models for each dataset mentioned in our paper, with specific input/output parameters used for training. The table also shows the corresponding evaluation results for these models. 
-
-
-| Dataset             | Model Type |  Image Size   | Layout Size|  mIOU  |  mAP  | Inference Time(fps)  | Pretrained Model |
-|:-------------------:|:----------:|:-------------:|:----------:|:------:|:-----:|:--------------------:|:----------------:|
-|  KITTI 3DObject     |   Dynamic  |  1024 x 1024  | 256 x 256  | 30.18  | 45.91 |         40fps        | [link](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/Ehka1d4X-JBDk7E0iOXJ5VwBOuwbh2ci_havCU-SFr9NVQ?e=JEJHIr)  |
-|  KITTI Odometry     |   Static   |   512 x 512   | 128 x 128  |  76.15 | 85.25 |         90fps        | [link](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/EhvKQhOwiq9NiA3H-NoK2O0BFSY0ymftF_9ixhwWlRWABA?e=c40xYy)  |
-|  Argoverse Tracking |   Dynamic  |  1024 x 1024  | 256 x 256  |  32.58 | 51.06 |         36fps        |[link](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/EmM6qDHz_LdPhOt1t8pVy44BkpMy8NQG-um7H24HBJRqiA?e=xSlg9c)  |
-|  Argoverse Tracking |   Static   |  1024 x 1024  | 256 x 256  |  73.25 | 84.56 |         36fps        |[link](https://iiitaphyd-my.sharepoint.com/:f:/g/personal/kaustubh_mani_research_iiit_ac_in/Eptj9pcxVzlDvdLCqO8LtMABLqNCtty8dNZSpmd-p9Y8AA?e=X3zS2F)  |
+```
 
 
-## Results
+<!-- ## Results
 
 | KITTI  | Argoverse |
 |:------:|:---------:|
 |<p align="center"><img src="assets/kitti1.gif" /> </p> | <p align="center"><img src="assets/argo_2.gif"/></p>|
-|<p align="center"><img src="assets/kitti_final.gif"/></p> | <p align="center"><img src="assets/argo_1.gif"/></p>|
+|<p align="center"><img src="assets/kitti_final.gif"/></p> | <p align="center"><img src="assets/argo_1.gif"/></p>| -->
 
-## Citing (BibTeX)
-
-If you find this work useful, please use the following BibTeX entry for citing us!
-
-```
-@inproceedings{mani2020monolayout,
-  title={MonoLayout: Amodal scene layout from a single image},
-  author={Mani, Kaustubh and Daga, Swapnil and Garg, Shubhika and Narasimhan, Sai Shankar and Krishna, Madhava and Jatavallabhula, Krishna Murthy},
-  booktitle={The IEEE Winter Conference on Applications of Computer Vision},
-  pages={1689--1697},
-  year={2020}
-}
-``` -->
