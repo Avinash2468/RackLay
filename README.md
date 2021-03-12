@@ -88,7 +88,7 @@ http://bit.ly/racklay-dataset
 
     - Here max_no_of_shelves represents the maximum number of shelves present in the dataset. In the complex_12k.zip case, it is 4. In the case a given datapoint has a rack with < max_no_of_shelves, those channels would be given 0 values.
 
-    - here occ_map_size represents the size of the layout itself. For the case of complex_12k.zip, it is 512.
+    - Here occ_map_size represents the size of the layout itself. For the case of complex_12k.zip, it is 512.
 
 3. Front View Layouts follow the same structure as Top View Layouts, except that they contain front views. 
 
