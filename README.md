@@ -3,7 +3,6 @@
 [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
 #### Link to [Paper](https://arxiv.org/abs/2103.09174), [Code](https://github.com/Avinash2468/RackLay) 
-#### Submitted to IROS 2021
 
 <p align="center">
     <img src="assets/teaser.png" />
@@ -15,13 +14,7 @@
 
 ## Abstract
 
-To this end, we present RackLay, a deep neural network for real-time shelf layout estimation from a single image. Unlike previous layout estimation methods which provide a single layout for the dominant ground plane alone, RackLay estimates the top-view \underline{and} front-view layout for each shelf in the considered rack populated with objects. RackLay's architecture and its variants are versatile and estimate accurate layouts for diverse scenes characterized by varying number of visible shelves in an image, large range in shelf occupancy factor and varied background clutter. Given the extreme paucity of datasets in this space and the difficulty involved in acquiring real data from warehouses, we additionally release a flexible synthetic dataset generation pipeline WareSynth which allows users to control the generation process and tailor the dataset according to contingent application. The ablations across architectural variants and comparison with strong prior baselines vindicate the efficacy of RackLay as an apt architecture for the novel problem of multi-layered layout estimation. We also show that fusing the top-view and front-view enables 3D reasoning applications such as metric free space estimation for the considered rack.
-
-## TL;DR
-
-Multi-layered scene layout estimation from a single image @ >14 fps*
-
-* Benchmarked on an Nvidia GeForce GTX 1080Ti GPU
+Given a monocular colour image of a warehouse rack, we aim to predict the bird's-eye view layout for each shelf in the rack, which we term as multi-layer layout prediction. To this end, we present RackLay, a deep neural network for real-time shelf layout estimation from a single image. Unlike previous layout estimation methods which provide a single layout for the dominant ground plane alone, RackLay estimates the top-view \underline{and} front-view layout for each shelf in the considered rack populated with objects. RackLay's architecture and its variants are versatile and estimate accurate layouts for diverse scenes characterized by varying number of visible shelves in an image, large range in shelf occupancy factor and varied background clutter. Given the extreme paucity of datasets in this space and the difficulty involved in acquiring real data from warehouses, we additionally release a flexible synthetic dataset generation pipeline WareSynth which allows users to control the generation process and tailor the dataset according to contingent application. The ablations across architectural variants and comparison with strong prior baselines vindicate the efficacy of RackLay as an apt architecture for the novel problem of multi-layered layout estimation. We also show that fusing the top-view and front-view enables 3D reasoning applications such as metric free space estimation for the considered rack.
 
 ## Contributions
 
@@ -33,12 +26,15 @@ Multi-layered scene layout estimation from a single image @ >14 fps*
 
 * We show tangible performance gain compared to other baseline architectures dovetailed and adapted to the problem of rack layout estimation. Moreover, we tabulate a number of ablations across  architectural variants which establish the efficacy and superiority of *RackLay*.
 
+## Architecture
+
 <p align="center">
     <img src="assets/double_decoder.png" />
 </p>
 
 The figure shows architecture diagram. It comprises of a context encoder, multi-channel decoders and adversarial discriminators.
 
+-------------------------------
 If you find this work useful, please use the following BibTeX entry for citing us
 ```
 @misc{nigam2021racklay,
