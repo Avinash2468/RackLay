@@ -2,12 +2,9 @@
 
 [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
-#### [Link to paper](https://arxiv.org/abs/2103.09174)
-#### [Link to code](https://github.com/Avinash2468/RackLay)
+#### Link to [Paper](https://arxiv.org/abs/2103.09174), [Code](https://github.com/Avinash2468/RackLay) 
 
-<!-- ####  [Video]( https://youtu.be/1hdl3W-MlXo) -->
-<!-- [Paper](https://arxiv.org/abs/2002.08394) -->
-<!-- #### Accepted to [WACV 2020](http://wacv20.wacv.net/) -->
+#### Submitted to IROS 2021
 
 <p align="center">
     <img src="assets/teaser.png" />
@@ -24,3 +21,5 @@ To this end, we present RackLay, a deep neural network for real-time shelf layou
 <p align="center">
     <img src="assets/double_decoder.png" />
 </p>
+
+The figure shows architecture diagram. It comprises of a context encoder, multi-channel decoders and adversarial discriminators.
