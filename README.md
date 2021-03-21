@@ -1,8 +1,7 @@
-<<<<<<< HEAD
+
 # RackLay: Multi-Layer Layout Estimation for Warehouse Racks
-=======
-# Racklay
->>>>>>> 8035a84440279e8dd7408454fe69ac747595df16
+
+
 #### [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
 <!-- ####  [Video]( https://youtu.be/1hdl3W-MlXo) -->
@@ -12,14 +11,13 @@
 <p align="center">
     <img src="assets/teaser.png" />
 </p>
-<<<<<<< HEAD
+
 <p align="center">
     <img src="assets/double_decoder.png" />
 </p>
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/1hdl3W-MlXo/0.jpg)](http://www.youtube.com/watch?v=1hdl3W-MlXo "Video Title")
-=======
 
->>>>>>> 8035a84440279e8dd7408454fe69ac747595df16
+
 
 ## Repository Structure
 
@@ -99,8 +97,7 @@ python train.py --type both --batch_size 32 --num_epochs 251 --split warehouse -
 
 ## Testing
 
-To generate layouts predicted by a particular trained model, use the `test.py` code and specify specific the mode of training as well as the path to the model directory. Also specify the input image directory as well as the output directory where the predictions will be saved.  
-
+To generate layouts predicted by a particular trained model, use the `test.py` code and specify specific the mode of training as well as the path to the model directory. Also specify the input image directory as well as the output directory where the predictions will be saved.
 ```
 
 python test.py --image_path <path to the image directory> --out_dir <path to the output directory>  --model_path <path to the model directory>  --num_racks <max_no_of_shelves> --type both --occ_map_size 512
@@ -124,4 +121,3 @@ python eval.py --data_path ./data  --pretrained_path <path to the model director
 |:------:|:---------:|
 |<p align="center"><img src="assets/kitti1.gif" /> </p> | <p align="center"><img src="assets/argo_2.gif"/></p>|
 |<p align="center"><img src="assets/kitti_final.gif"/></p> | <p align="center"><img src="assets/argo_1.gif"/></p>| -->
-
