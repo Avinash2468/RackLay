@@ -15,7 +15,6 @@
 <p align="center">
     <img src="assets/double_decoder.png" />
 </p>
-[![IMAGE ALT TEXT](http://img.youtube.com/vi/1hdl3W-MlXo/0.jpg)](http://www.youtube.com/watch?v=1hdl3W-MlXo "Video Title")
 
 
 
