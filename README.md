@@ -12,10 +12,6 @@
     <img src="assets/teaser.png" />
 </p>
 
-<p align="center">
-    <img src="assets/double_decoder.png" />
-</p>
-
 
 
 ## Repository Structure
