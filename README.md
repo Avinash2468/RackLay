@@ -1,14 +1,25 @@
+<<<<<<< HEAD
+# RackLay: Multi-Layer Layout Estimation for Warehouse Racks
+=======
 # Racklay
+>>>>>>> 8035a84440279e8dd7408454fe69ac747595df16
 #### [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
-####  [Video]( https://youtu.be/1hdl3W-MlXo)
+<!-- ####  [Video]( https://youtu.be/1hdl3W-MlXo) -->
 <!-- [Paper](https://arxiv.org/abs/2002.08394) -->
 <!-- #### Accepted to [WACV 2020](http://wacv20.wacv.net/) -->
 
 <p align="center">
     <img src="assets/teaser.png" />
 </p>
+<<<<<<< HEAD
+<p align="center">
+    <img src="assets/double_decoder.png" />
+</p>
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/1hdl3W-MlXo/0.jpg)](http://www.youtube.com/watch?v=1hdl3W-MlXo "Video Title")
+=======
 
+>>>>>>> 8035a84440279e8dd7408454fe69ac747595df16
 
 ## Repository Structure
 
@@ -83,10 +94,6 @@ Example code for training Racklay on different datasets in respective modes are 
 # RackLay-D-disc (for top and front views)
 python train.py --type both --batch_size 32 --num_epochs 251 --split warehouse --data_path ./data --num_racks 4 --log_frequency 50 --occ_map_size 512
 
-# RackLay-S-disc (for either top view or front view)
-python train.py --type single --batch_size 32 --num_epochs 251 --split warehouse --data_path ./data --num_racks <max_no_of_shelves> --log_frequency 50 --occ_map_size 512
-
-
 ```
 
 
@@ -96,7 +103,7 @@ To generate layouts predicted by a particular trained model, use the `test.py` c
 
 ```
 
-python test.py --image_path <path to the image directory> --out_dir <path to the output directory>  --model_path <path to the model directory>  --num_racks <max_no_of_shelves> --type <single/both> --occ_map_size 512
+python test.py --image_path <path to the image directory> --out_dir <path to the output directory>  --model_path <path to the model directory>  --num_racks <max_no_of_shelves> --type both --occ_map_size 512
 
 
 ```
@@ -106,7 +113,7 @@ python test.py --image_path <path to the image directory> --out_dir <path to the
 For evaluating a trained model use `eval.py` by specifying the mode used for training, the data split on which to evaluate as well as the path to the trained model directory. 
 
 ```
-python eval.py --data_path ./data  --pretrained_path <path to the model directory>  --split warehouse --num_rack 4 --type <single/both> --occ_map_size 512
+python eval.py --data_path ./data  --pretrained_path <path to the model directory>  --split warehouse --num_rack 4 --type both --occ_map_size 512
 
 ```
 
