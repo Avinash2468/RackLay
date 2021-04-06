@@ -2,11 +2,12 @@
 
 [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
-#### Link to [Paper](https://arxiv.org/abs/2103.09174), [Code](https://github.com/Avinash2468/RackLay) 
-
 <p align="center">
     <img src="assets/teaser.png" />
 </p>
+
+## Link to [Paper](https://arxiv.org/abs/2103.09174), [Code](https://github.com/Avinash2468/RackLay), [Dataset](https://drive.google.com/drive/folders/1-GizhhfVOeyITYK0nIYpoyQPgtgALHvG?usp=sharing)
+## Dataset Generation Pipeline: [Waresynth](https://anuragsahu.github.io/WareSynth/)
 
 ## [Teaser](https://www.youtube.com/watch?v=1hdl3W-MlXo)
 
