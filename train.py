@@ -62,8 +62,9 @@ def get_args():
         type=str,
         choices=[
             "both",
-            "static",
-            "dynamic"],
+            "topview",
+            "frontview"
+            ],
         help="Type of model being trained")
     parser.add_argument("--batch_size", type=int, default=1,
                         help="Mini-Batch size")
@@ -127,10 +128,17 @@ class Trainer:
             self.models["front_discr"] = racklay.Discriminator()
             self.models["front_decoder"] = racklay.Decoder(
                 self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
-        else:
-            self.models["decoder"] = racklay.Decoder(
+
+        elif self.opt.type == "topview":
+            self.models["top_decoder"] = racklay.Decoder(
                 self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
-            self.models["discriminator"] = racklay.Discriminator()
+            self.models["top_discr"] = racklay.Discriminator()
+
+        elif self.opt.type == "frontview":
+            self.models["front_decoder"] = racklay.Decoder(
+                self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
+            self.models["front_discr"] = racklay.Discriminator()
+
 
         for key in self.models.keys():
             self.models[key].to(self.device)
@@ -228,8 +236,20 @@ class Trainer:
         for self.epoch in range(self.opt.num_epochs):
         
             loss = self.run_epoch()
-            print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f | Front Loss: %.4f | Front Discriminator Loss: %.4f"%
-                  (self.epoch, loss["top_loss"], loss["top_loss_discr"], loss["front_loss"], loss["front_loss_discr"]))
+            if(self.opt.type == "both"):
+                print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f | Front Loss: %.4f | Front Discriminator Loss: %.4f"%
+                      (self.epoch, loss["top_loss"], loss["top_loss_discr"], loss["front_loss"], loss["front_loss_discr"]))
+
+            elif(self.opt.type == "topview"):
+                print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f"%
+                      (self.epoch, loss["top_loss"], loss["top_loss_discr"]))
+
+
+            elif(self.opt.type == "frontview"):
+                print("Epoch: %d | Front Loss: %.4f | Front Discriminator Loss: %.4f"%
+                      (self.epoch, loss["front_loss"], loss["front_loss_discr"]))
+
+
 
             if self.epoch % self.opt.log_frequency == 0:
                 self.save_model()
@@ -256,10 +276,12 @@ class Trainer:
         features = self.models["encoder"](inputs["color"])
 
         if self.opt.type == "both":
-            outputs["top"] = self.models["top_decoder"](features)
-            outputs["front"] = self.models["front_decoder"](features)
-        else:
-            outputs["topview"] = self.models["decoder"](features)
+            outputs["topview"] = self.models["top_decoder"](features)
+            outputs["frontview"] = self.models["front_decoder"](features)
+        elif self.opt.type == "topview":
+            outputs[self.opt.type] = self.models["top_decoder"](features)
+        elif self.opt.type == "frontview":
+            outputs[self.opt.type] = self.models["front_decoder"](features)
         if validation:
             return outputs
         
@@ -282,55 +304,56 @@ class Trainer:
             self.model_optimizer.zero_grad()
             self.model_optimizer_D.zero_grad()
 
-            loss_D_top = 0
-            loss_G_top = 0
-            for i in range(self.opt.num_racks): # For top view
-                gen_temp = outputs["top"][:,3*i:3*i+3,:,:]
-                gen_temp = torch.argmax(gen_temp, 1)
-                gen_temp = torch.unsqueeze(gen_temp, 1).float()
-                true_temp = inputs["top"].float()[:,i,:,:]
-                true_temp = torch.unsqueeze(true_temp, 1).float()
-                fake_pred = self.models["top_discr"](gen_temp)
-                real_pred = self.models["top_discr"](true_temp)
-                loss_GAN = self.criterion_d(fake_pred, self.valid)
-                loss_D_top += self.criterion_d(
-                    fake_pred, self.fake) + self.criterion_d(real_pred, self.valid)
-                loss_G_top += self.opt.lambda_D * loss_GAN + losses["top_loss"]
-
-            loss_D_front = 0
-            loss_G_front = 0
-            for i in range(self.opt.num_racks): # For front view
-                gen_temp = outputs["front"][:,3*i:3*i+3,:,:]
-                gen_temp = torch.argmax(gen_temp, 1)
-                gen_temp = torch.unsqueeze(gen_temp, 1).float()
-                true_temp = inputs["front"].float()[:,i,:,:]
-                true_temp = torch.unsqueeze(true_temp, 1).float()
-                fake_pred = self.models["front_discr"](gen_temp)
-                real_pred = self.models["front_discr"](true_temp)
-                loss_GAN = self.criterion_d(fake_pred, self.valid)
-                loss_D_front += self.criterion_d(
-                    fake_pred, self.fake) + self.criterion_d(real_pred, self.valid)
-                loss_G_front += self.opt.lambda_D * loss_GAN + losses["front_loss"]
-
             
-            if True: 
+            if(self.opt.type == "both" or self.opt.type == "topview"):
+                loss_D_top = 0
+                loss_G_top = 0
+                for i in range(self.opt.num_racks): # For top view
+                    gen_temp = outputs["topview"][:,3*i:3*i+3,:,:]
+                    gen_temp = torch.argmax(gen_temp, 1)
+                    gen_temp = torch.unsqueeze(gen_temp, 1).float()
+                    true_temp = inputs["topview"].float()[:,i,:,:]
+                    true_temp = torch.unsqueeze(true_temp, 1).float()
+                    fake_pred = self.models["top_discr"](gen_temp)
+                    real_pred = self.models["top_discr"](true_temp)
+                    loss_GAN = self.criterion_d(fake_pred, self.valid)
+                    loss_D_top += self.criterion_d(
+                        fake_pred, self.fake) + self.criterion_d(real_pred, self.valid)
+                    loss_G_top += self.opt.lambda_D * loss_GAN + losses["top_loss"]
                 loss_G_top.backward(retain_graph=True)                
                 loss_D_top.backward(retain_graph=True)
+
+
+            if(self.opt.type == "both" or self.opt.type == "frontview"):
+                loss_D_front = 0
+                loss_G_front = 0
+                for i in range(self.opt.num_racks): # For front view
+                    gen_temp = outputs["frontview"][:,3*i:3*i+3,:,:]
+                    gen_temp = torch.argmax(gen_temp, 1)
+                    gen_temp = torch.unsqueeze(gen_temp, 1).float()
+                    true_temp = inputs["frontview"].float()[:,i,:,:]
+                    true_temp = torch.unsqueeze(true_temp, 1).float()
+                    fake_pred = self.models["front_discr"](gen_temp)
+                    real_pred = self.models["front_discr"](true_temp)
+                    loss_GAN = self.criterion_d(fake_pred, self.valid)
+                    loss_D_front += self.criterion_d(
+                        fake_pred, self.fake) + self.criterion_d(real_pred, self.valid)
+                    loss_G_front += self.opt.lambda_D * loss_GAN + losses["front_loss"]
                 loss_G_front.backward(retain_graph=True)
                 loss_D_front.backward()
-                self.model_optimizer.step()
-                self.model_optimizer_D.step()
-            else:
-                losses["top_loss"].backward(retain_graph=True)
-                losses["front_loss"].backward()
-                self.model_optimizer.step()
-
-            loss["top_loss"] += losses["top_loss"].item()
-            loss["front_loss"] += losses["front_loss"].item()
-            loss["loss"] += losses["top_loss"].item() 
-            loss["loss"] += losses["front_loss"].item()
-            loss["top_loss_discr"] += loss_D_top.item() 
-            loss["front_loss_discr"] += loss_D_front.item()
+                        
+            self.model_optimizer.step()
+            self.model_optimizer_D.step()
+            
+            if(self.opt.type == "both" or self.opt.type == "topview"):
+                loss["top_loss"] += losses["top_loss"].item()
+                loss["loss"] += losses["top_loss"].item()
+                loss["top_loss_discr"] += loss_D_top.item() 
+            if(self.opt.type == "both" or self.opt.type == "frontview"):
+                loss["front_loss"] += losses["front_loss"].item()
+                loss["loss"] += losses["front_loss"].item()
+                loss["front_loss_discr"] += loss_D_front.item()
+        
         # loss["loss_norm"] = loss["loss"]/len(self.train_loader)
         # loss["loss_discr"] /= len(self.train_loader)
         return loss
@@ -342,44 +365,37 @@ class Trainer:
         loss["loss"] = 0.0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.val_loader)):
             outputs, losses = self.process_batch(inputs)
-            loss["top_loss"] += losses["top_loss"].item()
-            loss["front_loss"] += losses["front_loss"].item()
-            #for i in range(self.opt.num_racks):  
-                #input_temp =   inputs[self.opt.type][:,i,:,:].detach().cpu().numpy()
-                #input_temp = np.squeeze(input_temp)
-                #input_temp = cv2.resize(input_temp, dsize=(self.opt.occ_map_size, self.opt.occ_map_size), interpolation=cv2.INTER_NEAREST)
-              
-                #pred = np.squeeze(
-                 #   torch.argmax(
-                 #       outputs["topview"][:,3*i:3*i+3,:,:].detach(),
-                 #       1).cpu().numpy())
-                #true = np.squeeze(input_temp)
-                #iou_rack += mean_IU(pred, true)
-                #mAP_rack += mean_precision(pred, true)
-         
-        #iou_rack /= (len(self.val_loader)*self.opt.num_racks)
-        #mAP_rack /= (len(self.val_loader)*self.opt.num_racks)
-        #loss_temp = loss["loss"] / len(self.val_loader)
-        #print("Evaluation Results for Rack: mIOU: %.4f mAP: %.4f" % (iou_rack[1], mAP_rack[1]))
-        #print("Evaluation Results for Box: mIOU: %.4f mAP: %.4f" % (iou_box[1], mAP_box[1]))
-        print(" Top Loss: %.4f  | Front Loss: %.4f "%
-                  ( loss["top_loss"], loss["front_loss"])) 
-        loss["loss"] += losses["top_loss"].item() 
-        loss["loss"] += losses["front_loss"].item() 
+
+            if(self.opt.type == "both" or self.opt.type == "topview"):
+                loss["top_loss"] += losses["top_loss"].item()
+            if(self.opt.type == "both" or self.opt.type == "frontview"):
+                loss["front_loss"] += losses["front_loss"].item()
+            
+        print(" Top Loss: %.4f  | Front Loss: %.4f "%( loss["top_loss"], loss["front_loss"])) 
+
+        if(self.opt.type == "both" or self.opt.type == "topview"):
+            loss["loss"] += losses["top_loss"].item() 
+        if(self.opt.type == "both" or self.opt.type == "frontview"):
+            loss["loss"] += losses["front_loss"].item() 
         return loss
 
     def compute_losses(self, inputs, outputs):
         losses = {}
         if self.opt.type == "both":
             losses["top_loss"] = self.compute_topview_loss(
-                                            outputs["top"],
-                                            inputs["top"])
-            losses["front_loss"] = self.compute_topview_loss(
-                                            outputs["front"],
-                                            inputs["front"])
-        else:
-            losses["loss"] = self.compute_topview_loss(
                                             outputs["topview"],
+                                            inputs["topview"])
+            losses["front_loss"] = self.compute_topview_loss(
+                                            outputs["frontview"],
+                                            inputs["frontview"])
+        elif self.opt.type == "topview":
+            losses["top_loss"] = self.compute_topview_loss(
+                                            outputs[self.opt.type],
+                                            inputs[self.opt.type])
+
+        elif self.opt.type == "frontview":
+            losses["front_loss"] = self.compute_topview_loss(
+                                            outputs[self.opt.type],
                                             inputs[self.opt.type])
 
         return losses
