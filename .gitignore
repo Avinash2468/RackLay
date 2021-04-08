@@ -1,0 +1,7 @@
+# write paths to files to ignore
+
+# pycache file
+**/__pycache__/**
+
+# model weights
+**/models/**

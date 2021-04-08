@@ -90,12 +90,12 @@ class Loader(data.Dataset):
         return img_path
 
     def get_top_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "top" + "%06d.npy" % int(frame_index))
+        img_path = os.path.join(root_dir, "top"+"%06d.npy" % int(frame_index))
 
         return img_path
 
     def get_front_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir,"front" + "%06d.npy" % int(frame_index))
+        img_path = os.path.join(root_dir, "top"+"%06d.npy" % int(frame_index))
 
         return img_path
 
@@ -115,11 +115,11 @@ class Loader(data.Dataset):
         # check this part from original code if the dataset is changed
         folder = self.opt.data_path
 
-        inputs["color"] = self.get_color(folder, frame_index, do_flip)
-
-        inputs["top"] = self.get_top(folder, frame_index, do_flip)
-
-        inputs["front"] = self.get_front(folder, frame_index, do_flip)
+        inputs["color"] = self.get_color(folder+"anuragAnnotations/images/", frame_index, do_flip)
+        if(self.opt.type == "both" or self.opt.type == "topview"):
+            inputs["topview"] = self.get_top(folder+"anuragAnnotations/topLayouts/", frame_index, do_flip)
+        if(self.opt.type == "both" or self.opt.type == "frontview"):
+            inputs["frontview"] = self.get_front(folder+"anuragAnnotations/frontLayouts/", frame_index, do_flip)
 
         
         if do_color_aug:

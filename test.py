@@ -32,7 +32,7 @@ def get_args():
     parser.add_argument("--out_dir", type=str,
                         default="output directory to save topviews")
     parser.add_argument("--type", type=str,
-                        default="static/dynamic/both")
+                        default="both/topview/frontview")
     parser.add_argument("--num_racks", type=int, default=1,
                         help="Max number of racks")
     parser.add_argument("--occ_map_size", type=int, default=128,
@@ -87,11 +87,17 @@ def test(args):
             models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
         models["front_decoder"].load_state_dict(
             torch.load(front_decoder_path, map_location=device))
-    else:
-        decoder_path = os.path.join(args.model_path, "decoder.pth")
-        models["decoder"] = model.Decoder(
+    elif args.type == "topview":
+        decoder_path = os.path.join(args.model_path, "top_decoder.pth")
+        models["top_decoder"] = model.Decoder(
             models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
-        models["decoder"].load_state_dict(
+        models["top_decoder"].load_state_dict(
+            torch.load(decoder_path, map_location=device))
+    elif args.type == "frontview":
+        decoder_path = os.path.join(args.model_path, "front_decoder.pth")
+        models["front_decoder"] = model.Decoder(
+            models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
+        models["front_decoder"].load_state_dict(
             torch.load(decoder_path, map_location=device))
 
     for key in models.keys():
@@ -156,8 +162,17 @@ def test(args):
                         args.out_dir,
                         "front",
                         "{}".format(output_name)))
-            else:
-                tv = models["decoder"](features, is_training=False)
+            elif args.type == "topview":
+                tv = models["top_decoder"](features, is_training=False)
+                save_topview(
+                    idx,
+                    tv,
+                    os.path.join(
+                        args.out_dir,
+                        args.type,
+                        "{}".format(output_name)))
+            elif args.type == "frontview":
+                tv = models["front_decoder"](features, is_training=False)
                 save_topview(
                     idx,
                     tv,
