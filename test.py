@@ -47,6 +47,10 @@ def save_topview(idx, tv_temp, name_dest_im):
         tv = tv_temp[:,3*i:3*i+3,:,:]
         tv_np = tv.squeeze()
         tv = torch.argmax(tv_np, 0)
+        #for i in range(len(tv)):
+        #    for j in range(len(tv[i])):
+        #        if(tv[i][j]==1):
+        #            print("Here",end=" ")
         tv[tv==1] = 115
         tv[tv==2] = 255
         dir_name = os.path.dirname(name_dest_im)
