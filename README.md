@@ -2,7 +2,7 @@
 # RackLay: Multi-Layer Layout Estimation for Warehouse Racks
 
 
-#### [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
+#### [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), [Anurag Sahu](https://anuragsahu.github.io/), Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
 <!-- ####  [Video]( https://youtu.be/1hdl3W-MlXo) -->
 <!-- [Paper](https://arxiv.org/abs/2002.08394) -->
