@@ -85,7 +85,14 @@ Example code for training Racklay on different datasets in respective modes are 
 ```
 
 # RackLay-D-disc (for top view or front view or both)
-python train.py --type <both/topview/frontview> --batch_size 32 --num_epochs 251 --split warehouse --data_path ./data --num_racks 4 --log_frequency 50 --occ_map_size 512
+python train.py --type <both/topview/frontview> \
+ --batch_size 32 \
+ --num_epochs 251 \
+ --split warehouse \
+ --data_path ./data \
+ --num_racks 4 \
+ --log_frequency 50 \
+ --occ_map_size 512
 
 ```
 
@@ -95,7 +102,12 @@ python train.py --type <both/topview/frontview> --batch_size 32 --num_epochs 251
 To generate layouts predicted by a particular trained model, use the `test.py` code and specify specific the mode of training as well as the path to the model directory. Also specify the input image directory as well as the output directory where the predictions will be saved.
 ```
 
-python test.py --image_path <path to the image directory> --out_dir <path to the output directory>  --model_path <path to the model directory>  --num_racks <max_no_of_shelves> --type <both/topview/frontview> --occ_map_size 512
+python test.py --image_path <path to the image directory> \
+--out_dir <path to the output directory> \
+--model_path <path to the model directory> \
+--num_racks <max_no_of_shelves> \
+--type <both/topview/frontview> \
+--occ_map_size 512
 
 
 ```
@@ -105,7 +117,12 @@ python test.py --image_path <path to the image directory> --out_dir <path to the
 For evaluating a trained model use `eval.py` by specifying the mode used for training, the data split on which to evaluate as well as the path to the trained model directory. 
 
 ```
-python eval.py --data_path ./data  --pretrained_path <path to the model directory>  --split warehouse --num_rack 4 --type <both/topview/frontview> --occ_map_size 512
+python eval.py --data_path ./data \
+--pretrained_path <path to the model directory> \
+--split warehouse \
+--num_rack 4 \
+--type <both/topview/frontview> \
+--occ_map_size 512
 
 ```
 
