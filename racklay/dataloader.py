@@ -28,7 +28,7 @@ def process_topview(topview_temp, size,num_racks):
         topview = cv2.resize(topview, dsize=(size, size), interpolation=cv2.INTER_NEAREST)
         topview = np.array(topview)
         topview_n = np.zeros(topview.shape)
-        topview_n[topview == 115] = 1  # [1.,0.]
+        topview_n[topview == 115] = 1  # [1.,0.] # Update the GT value
         topview_n[topview == 255] = 2  # [1.,0.]
         topview_final[i,:,:] = topview_n
     return np.asarray(topview_final)
