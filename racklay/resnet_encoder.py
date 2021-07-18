@@ -5,6 +5,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 import torchvision.models as models
 
@@ -89,20 +92,53 @@ class ResnetEncoder(nn.Module):
                 num_layers, pretrained, num_input_images)
         else:
             self.encoder = resnets[num_layers](pretrained)
+            for param in self.encoder.parameters():
+                param.requires_grad = False
 
         if num_layers > 34:
             self.num_ch_enc[1:] *= 4
+            
+    def plot(self, x):
+
+        x = x.cpu().detach().numpy().squeeze()
+        print("SHAPE in PLOT")
+        print(x.shape)
+
+        square = x.shape[0]//8
+        ix = 1
+        print("check1")
+        fig, ax = plt.subplots(figsize=(15,15), nrows= square, ncols= square)
+        print("check2")
+        for i in range(square):
+            for j in range(square):
+                ax[i,j].imshow(x[ix-1, :, :], cmap='gray')
+                ix += 1
+        print("over1")
+        plt.savefig("./testing.png")
+        print("over2")
 
     def forward(self, input_image):
+    
         self.features = []
         x = (input_image - 0.45) / 0.225
+        
+
         x = self.encoder.conv1(x)
         x = self.encoder.bn1(x)
         self.features.append(self.encoder.relu(x))
+
         self.features.append(self.encoder.layer1(
             self.encoder.maxpool(self.features[-1])))
+        
         self.features.append(self.encoder.layer2(self.features[-1]))
+        
         self.features.append(self.encoder.layer3(self.features[-1]))
+
+        # print(self.encoder.layer4(self.features[-1]).shape)
         self.features.append(self.encoder.layer4(self.features[-1]))
 
+        # print("SHAPES of ENCODER")
+        # for i in self.features:
+        #     print(i.shape)
         return self.features
+	

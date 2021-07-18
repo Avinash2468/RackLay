@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import numpy as np
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -49,7 +50,6 @@ def upsample(x):
     """Upsample input tensor by a factor of 2
     """
     return F.interpolate(x, scale_factor=2, mode="nearest")
-
 
 class Encoder(nn.Module):
     """ Encodes the Image into low-dimensional feature representation
@@ -100,13 +100,15 @@ class Encoder(nn.Module):
 
         batch_size, c, h, w = x.shape
 
-        x = self.resnet_encoder(x)[-1]
+
+        encoder_list = self.resnet_encoder(x)
+        x = encoder_list[-1]
 
         #x = self.pool(self.conv1(x))
         #x = self.conv2(x)
         #x = self.pool(x)  
 
-        return x
+        return x, encoder_list
 
 
 class Decoder(nn.Module):
@@ -127,15 +129,24 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.num_output_channels = num_out_ch
         self.num_ch_enc = num_ch_enc
-        self.num_ch_dec = np.array([16, 32, 64, 128, 256, 512]) 
+        self.num_ch_dec = np.array([16, 32, 64, 128, 256]) 
         self.oct_map_size = oct_map_size
         self.pool = nn.MaxPool2d(2)
         # decoder
         self.convs = OrderedDict()
-        for i in range(5, -1, -1):
+        for i in range(4, -1, -1):
             # upconv_0
-            num_ch_in = 512 if i == 5 else self.num_ch_dec[i + 1]
+            if i == 4:
+                num_ch_in = 512 
+            
+            elif i == 0:
+                num_ch_in = 96
+            
+            else:
+                num_ch_in =  2*self.num_ch_dec[i + 1]
+
             num_ch_out = self.num_ch_dec[i]
+
             self.convs[("upconv", i, 0)] = nn.Conv2d(
                 num_ch_in, num_ch_out, 3, 1, 1)
             self.convs[("norm", i, 0)] = nn.BatchNorm2d(num_ch_out)
@@ -151,7 +162,7 @@ class Decoder(nn.Module):
         self.dropout = nn.Dropout3d(0.2)
         self.decoder = nn.ModuleList(list(self.convs.values()))
 
-    def forward(self, x, is_training=True):
+    def forward(self, x, encoder_list, is_training=True):
         """
 
         Parameters
@@ -168,17 +179,28 @@ class Decoder(nn.Module):
             Batch of output Layouts
             | Shape: (batch_size, 2, occ_map_size, occ_map_size)
         """
-
-        for i in range(5, -1, -1):
-
+        # print("before model for loop")
+        # print(x.shape)
+        # print("inside")
+        for i in range(4, -1, -1):
+            # print(i)
+            # print(x.shape)
+            if i<4:
+                # print("corresponding in encoder")
+                # print(encoder_list[i].shape)
+                copy = encoder_list[i].detach().clone()
+                copy.requires_grad = True
+                x = torch.cat((x, copy), 1)
+            # print("after concat")
+            # print(x.shape)
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
             x = self.convs[("relu", i, 0)](x)
             x = upsample(x)
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
-
-        x = self.pool(x)
+        # print("after")
+        # print(x.shape)
 
         if is_training:
             x = self.convs["topview"](x)

@@ -94,6 +94,8 @@ def get_args():
                         help="epoch to start training discriminator")
     parser.add_argument("--osm_path", type=str, default="./data/osm",
                         help="OSM path")
+    parser.add_argument("--encoder_train", type=str, default=False,
+                        help="Whether or not to train the encoder")
 
     return parser.parse_args()
 
@@ -140,11 +142,18 @@ class Trainer:
             self.models["front_discr"] = racklay.Discriminator()
 
 
+        if self.opt.encoder_train == False:
+        
+            for param in self.models["encoder"].parameters():
+    	        param.requires_grad = False
+
         for key in self.models.keys():
             self.models[key].to(self.device)
             if "discr" in key:
                 self.parameters_to_train_D += list(
                     self.models[key].parameters())
+            elif "encoder" in key:
+                continue
             else:
                 self.parameters_to_train += list(self.models[key].parameters())
 
@@ -341,7 +350,9 @@ class Trainer:
                     loss_G_front += self.opt.lambda_D * loss_GAN + losses["front_loss"]
                 loss_G_front.backward(retain_graph=True)
                 loss_D_front.backward()
-                        
+
+            # losses["top_loss"].backward(retain_graph=True)
+            # losses["front_loss"].backward()     
             self.model_optimizer.step()
             self.model_optimizer_D.step()
             
@@ -349,10 +360,12 @@ class Trainer:
                 loss["top_loss"] += losses["top_loss"].item()
                 loss["loss"] += losses["top_loss"].item()
                 loss["top_loss_discr"] += loss_D_top.item() 
+                # loss["top_loss_discr"] += 0
             if(self.opt.type == "both" or self.opt.type == "frontview"):
                 loss["front_loss"] += losses["front_loss"].item()
                 loss["loss"] += losses["front_loss"].item()
                 loss["front_loss_discr"] += loss_D_front.item()
+                # loss["front_loss_discr"] += 0
         
         # loss["loss_norm"] = loss["loss"]/len(self.train_loader)
         # loss["loss_discr"] /= len(self.train_loader)

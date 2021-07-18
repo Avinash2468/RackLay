@@ -139,6 +139,8 @@ def test(args):
             original_width, original_height = input_image.size
             input_image = input_image.resize(
                 (feed_width, feed_height), pil.LANCZOS)
+            print("INPUT IMAGE SHAPE")
+            print(input_image.size)
             input_image = transforms.ToTensor()(input_image).unsqueeze(0)
 
             # PREDICTION

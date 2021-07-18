@@ -100,7 +100,7 @@ class Encoder(nn.Module):
 
         batch_size, c, h, w = x.shape
 
-        x = self.resnet_encoder(x)[-1]
+        x = self.resnet_encoder(x)[1]
 
         #x = self.pool(self.conv1(x))
         #x = self.conv2(x)
@@ -127,14 +127,14 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.num_output_channels = num_out_ch
         self.num_ch_enc = num_ch_enc
-        self.num_ch_dec = np.array([16, 32, 64, 128, 256, 512]) 
+        self.num_ch_dec = np.array([16, 32, 64]) 
         self.oct_map_size = oct_map_size
         self.pool = nn.MaxPool2d(2)
         # decoder
         self.convs = OrderedDict()
-        for i in range(5, -1, -1):
+        for i in range(2, -1, -1):
             # upconv_0
-            num_ch_in = 512 if i == 5 else self.num_ch_dec[i + 1]
+            num_ch_in = 64 if i == 2 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
             self.convs[("upconv", i, 0)] = nn.Conv2d(
                 num_ch_in, num_ch_out, 3, 1, 1)
@@ -169,7 +169,7 @@ class Decoder(nn.Module):
             | Shape: (batch_size, 2, occ_map_size, occ_map_size)
         """
 
-        for i in range(5, -1, -1):
+        for i in range(2, -1, -1):
 
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
@@ -177,15 +177,16 @@ class Decoder(nn.Module):
             x = upsample(x)
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
-
+        # print("OUTPUT of for loop")
+        # print(x.shape)
         x = self.pool(x)
-
+        # print(x.shape)
         if is_training:
             x = self.convs["topview"](x)
         else:
             softmax = nn.Softmax2d()
             x = softmax(self.convs["topview"](x))
-
+        # print(x.shape)
         return x
 
 

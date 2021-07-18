@@ -84,7 +84,7 @@ class Loader(data.Dataset):
 
 
     def get_image_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "%06d.png" % int(frame_index))
+        img_path = os.path.join(root_dir, "%06d.jpg" % int(frame_index))
         #img_path = os.path.join(root_dir, "front" + "%06d.npy" % int(frame_index))
 
         return img_path
@@ -95,7 +95,7 @@ class Loader(data.Dataset):
         return img_path
 
     def get_front_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "top"+"%06d.npy" % int(frame_index))
+        img_path = os.path.join(root_dir, "front"+"%06d.npy" % int(frame_index))
 
         return img_path
 
@@ -105,21 +105,21 @@ class Loader(data.Dataset):
     def __getitem__(self, index):
         inputs = {}
 
-        #do_color_aug = self.is_train and random.random() > 0.5
-        #do_flip = self.is_train and random.random() > 0.5
+        do_color_aug = self.is_train and random.random() > 0.5
+        do_flip = self.is_train and random.random() > 0.5
         
-        do_color_aug = 0
-        do_flip = 0
+        # do_color_aug = True
+        # do_flip = True
 
         frame_index = self.filenames[index]  # .split()
         # check this part from original code if the dataset is changed
         folder = self.opt.data_path
 
-        inputs["color"] = self.get_color(folder+"anuragAnnotations/images/", frame_index, do_flip)
+        inputs["color"] = self.get_color(folder+"Images/", frame_index, do_flip)
         if(self.opt.type == "both" or self.opt.type == "topview"):
-            inputs["topview"] = self.get_top(folder+"anuragAnnotations/topLayouts/", frame_index, do_flip)
+            inputs["topview"] = self.get_top(folder+"topLayouts/", frame_index, do_flip)
         if(self.opt.type == "both" or self.opt.type == "frontview"):
-            inputs["frontview"] = self.get_front(folder+"anuragAnnotations/frontLayouts/", frame_index, do_flip)
+            inputs["frontview"] = self.get_front(folder+"topLayouts/", frame_index, do_flip)
 
         
         if do_color_aug:
@@ -141,18 +141,27 @@ class Loader(data.Dataset):
         return color
 
     def get_top(self, folder, frame_index, do_flip):
-        tv = self.loader(self.get_top_path(folder, frame_index))
 
+        tv = self.loader(self.get_top_path(folder, frame_index))
+     
         if do_flip:
-            tv = tv.transpose(pil.FLIP_LEFT_RIGHT)
+            tv_copy = np.zeros_like(tv)
+            for i in range(self.opt.num_racks):
+                topview = tv[i,:,:]
+                tv_copy[i,:,:] = np.fliplr(topview)
+            tv = tv_copy
 
         return tv
 
     def get_front(self, folder, frame_index, do_flip):
+
         tv = self.loader(self.get_front_path(folder, frame_index))
-
+     
         if do_flip:
-            tv = tv.transpose(pil.FLIP_LEFT_RIGHT)
-
+            tv_copy = np.zeros_like(tv)
+            for i in range(self.opt.num_racks):
+                frontview = tv[i,:,:]
+                tv_copy[i,:,:] = np.fliplr(frontview)
+            tv = tv_copy
         return tv
 
