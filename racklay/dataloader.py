@@ -119,7 +119,7 @@ class Loader(data.Dataset):
         if(self.opt.type == "both" or self.opt.type == "topview"):
             inputs["topview"] = self.get_top(folder+"topLayouts/", frame_index, do_flip)
         if(self.opt.type == "both" or self.opt.type == "frontview"):
-            inputs["frontview"] = self.get_front(folder+"topLayouts/", frame_index, do_flip)
+            inputs["frontview"] = self.get_front(folder+"frontLayouts/", frame_index, do_flip)
 
         
         if do_color_aug:

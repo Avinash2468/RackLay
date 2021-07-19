@@ -93,7 +93,7 @@ class ResnetEncoder(nn.Module):
         else:
             self.encoder = resnets[num_layers](pretrained)
             for param in self.encoder.parameters():
-                param.requires_grad = False
+                param.requires_grad = True
 
         if num_layers > 34:
             self.num_ch_enc[1:] *= 4

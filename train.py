@@ -145,15 +145,14 @@ class Trainer:
         if self.opt.encoder_train == False:
         
             for param in self.models["encoder"].parameters():
-    	        param.requires_grad = False
+    	        param.requires_grad = True
+
 
         for key in self.models.keys():
             self.models[key].to(self.device)
             if "discr" in key:
                 self.parameters_to_train_D += list(
                     self.models[key].parameters())
-            elif "encoder" in key:
-                continue
             else:
                 self.parameters_to_train += list(self.models[key].parameters())
 
