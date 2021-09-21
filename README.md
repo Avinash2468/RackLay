@@ -1,5 +1,5 @@
 
-# RackLay: Multi-Layer Layout Estimation for Warehouse Racks
+# RackLay: Monocular Multi-Layered Layout Estimation for Warehouses with Sim2Real Transfer
 
 
 #### [Avinash Prabhu](https://avinash2468.github.io/), [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Tanvi Karandikar](https://tanvi141.github.io/), [Anurag Sahu](https://anuragsahu.github.io/), Pranjali Pathre, Harit Pandya, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
