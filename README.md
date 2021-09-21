@@ -9,7 +9,7 @@
 <!-- #### Accepted to [WACV 2020](http://wacv20.wacv.net/) -->
 
 <p align="center">
-    <img src="assets/teaser.png" />
+    <img src="assets/teaser-hor.png" />
 </p>
 
 
