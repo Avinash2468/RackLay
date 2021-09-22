@@ -23,6 +23,12 @@
 
 Architecture comprises of a context encoder, multi-channel decoders and adversarial discriminators.
 
+## Dataset Diversity
+
+<p align="center">
+    <img src="assets/diverse.png" />
+</p>
+
 ## How to cite
 If you find this work useful, please use the following BibTeX entry for citing us
 ```
