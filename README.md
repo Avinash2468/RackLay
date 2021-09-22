@@ -7,11 +7,11 @@
 </p>
 
 ## Link to [Paper](https://arxiv.org/abs/2103.09174), [Code](https://github.com/Avinash2468/RackLay), [Dataset](https://drive.google.com/drive/folders/1-GizhhfVOeyITYK0nIYpoyQPgtgALHvG?usp=sharing)
-## Dataset Generation Pipeline: [Waresynth](https://anuragsahu.github.io/WareSynth/)
+## Dataset Generation Pipeline: [Waresynth](https://github.com/Tanvi141/WareSynthUnity)
 
 ## [Teaser](https://youtu.be/9m5brJTAz50)
 
-<iframe height="500" width="800" src="https://youtu.be/9m5brJTAz50" align="center" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe height="500" width="800" src="https://www.youtube.com/embed/9m5brJTAz50" align="center" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Architecture
 
