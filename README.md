@@ -26,7 +26,7 @@ Architecture comprises of a context encoder, multi-channel decoders and adversar
 ## Dataset Diversity
 
 <p align="center">
-    <img src="assets/diverse.png" />
+    <img src="assets/Diverse.jpg" />
 </p>
 
 ## How to cite
