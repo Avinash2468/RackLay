@@ -1,15 +1,15 @@
-# RackLay: Multi-Layer Layout Estimation for Warehouse Racks
+# RackLay: Monocular Multi-Layered Layout Estimation for Warehouses with Sim2Real Transfer
 
-[Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Avinash Prabhu](https://avinash2468.github.io/), Anurag Sahu, Puru Gupta, [Tanvi Karandikar](https://tanvi141.github.io/), N. Sai Shankar, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
+[Avinash Prabhu](https://avinash2468.github.io/), [Meher Shashwat Nigam](https://github.com/ShashwatNigam99), [Tanvi Karandikar](https://tanvi141.github.io/), [Anurag Sahu](https://anuragsahu.github.io/), Pranjali Pathre, Harit Pandya, [Ravi Kiran Sarvadevabhatla](https://ravika.github.io), and [K. Madhava Krishna](http://robotics.iiit.ac.in)
 
 <p align="center">
-    <img src="assets/teaser.png" />
+    <img src="assets/teaser-hor.png" />
 </p>
 
 ## Link to [Paper](https://arxiv.org/abs/2103.09174), [Code](https://github.com/Avinash2468/RackLay), [Dataset](https://drive.google.com/drive/folders/1-GizhhfVOeyITYK0nIYpoyQPgtgALHvG?usp=sharing)
 ## Dataset Generation Pipeline: [Waresynth](https://anuragsahu.github.io/WareSynth/)
 
-## [Teaser](https://www.youtube.com/watch?v=1hdl3W-MlXo)
+## [Teaser](https://youtu.be/9m5brJTAz50)
 
 <iframe height="500" width="800" src="https://www.youtube.com/embed/1hdl3W-MlXo" align="center" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
