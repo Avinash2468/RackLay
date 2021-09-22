@@ -11,7 +11,9 @@
 
 ## [Teaser](https://youtu.be/9m5brJTAz50)
 
-<iframe height="500" width="800" src="https://www.youtube.com/embed/9m5brJTAz50" align="center" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<!-- <iframe height="500" width="800" src="https://www.youtube.com/embed/9m5brJTAz50" align="center" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9m5brJTAz50" frameborder="0" allowfullscreen></iframe>
 
 ## Architecture
 
