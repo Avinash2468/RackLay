@@ -94,8 +94,6 @@ def get_args():
                         help="epoch to start training discriminator")
     parser.add_argument("--osm_path", type=str, default="./data/osm",
                         help="OSM path")
-    parser.add_argument("--encoder_train", type=str, default=False,
-                        help="Whether or not to train the encoder")
 
     return parser.parse_args()
 
@@ -140,12 +138,6 @@ class Trainer:
             self.models["front_decoder"] = racklay.Decoder(
                 self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
             self.models["front_discr"] = racklay.Discriminator()
-
-
-        if self.opt.encoder_train == False:
-        
-            for param in self.models["encoder"].parameters():
-    	        param.requires_grad = True
 
 
         for key in self.models.keys():
