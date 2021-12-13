@@ -4,7 +4,7 @@ import os
 import racklay
 
 from racklay.dataloader import Loader
-
+from racklay import VideoLayout
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -21,7 +21,6 @@ from utils import mean_IU, mean_precision
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
-
 
 def get_args():
     parser = argparse.ArgumentParser(description="racklay options")
@@ -94,7 +93,6 @@ def get_args():
                         help="epoch to start training discriminator")
     parser.add_argument("--osm_path", type=str, default="./data/osm",
                         help="OSM path")
-
     return parser.parse_args()
 
 
@@ -105,6 +103,15 @@ def readlines(filename):
         lines = f.read().splitlines()
     return lines
 
+def temporal_readlines(self, filename):
+        f = open(filename, "r")
+        files = [k.split("\n")[:-1] for k in f.read().split(",")[:-1]]
+        temporal_files = []
+        for seq_files in files:
+            seq_files = [seq_files[0]]*self.opt.seq_len + seq_files
+            for i in range(self.opt.seq_len, len(seq_files)):
+                temporal_files.append(seq_files[i-self.opt.seq_len:i])
+        return temporal_files
 
 class Trainer:
     def __init__(self):
@@ -119,61 +126,7 @@ class Trainer:
         self.parameters_to_train_D = []
 
         # Initializing models
-        self.models["encoder"] = racklay.Encoder(
-            18, self.opt.height, self.opt.width, True)
-        if self.opt.type == "both":
-            self.models["top_decoder"] = racklay.Decoder(
-                self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
-            self.models["top_discr"] = racklay.Discriminator()
-            self.models["front_discr"] = racklay.Discriminator()
-            self.models["front_decoder"] = racklay.Decoder(
-                self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
-
-        elif self.opt.type == "topview":
-            self.models["top_decoder"] = racklay.Decoder(
-                self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
-            self.models["top_discr"] = racklay.Discriminator()
-
-        elif self.opt.type == "frontview":
-            self.models["front_decoder"] = racklay.Decoder(
-                self.models["encoder"].resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
-            self.models["front_discr"] = racklay.Discriminator()
-
-
-        for key in self.models.keys():
-            self.models[key].to(self.device)
-            if "discr" in key:
-                self.parameters_to_train_D += list(
-                    self.models[key].parameters())
-            else:
-                self.parameters_to_train += list(self.models[key].parameters())
-
-        # Optimization
-        self.model_optimizer = optim.Adam(
-            self.parameters_to_train, self.opt.lr)
-        self.model_lr_scheduler = optim.lr_scheduler.StepLR(
-            self.model_optimizer, self.opt.scheduler_step_size, 0.1)
-
-        self.model_optimizer_D = optim.Adam(
-            self.parameters_to_train_D, self.opt.lr)
-        self.model_lr_scheduler_D = optim.lr_scheduler.StepLR(
-            self.model_optimizer_D, self.opt.scheduler_step_size, 0.1)
-
-        self.patch = (1, self.opt.occ_map_size // 2 **
-                      4, self.opt.occ_map_size // 2**4)
-
-        self.valid = Variable(
-            torch.Tensor(
-                np.ones(
-                    (self.opt.batch_size,
-                     *self.patch))),
-            requires_grad=False).float().cuda()
-        self.fake = Variable(
-            torch.Tensor(
-                np.zeros(
-                    (self.opt.batch_size,
-                     *self.patch))),
-            requires_grad=False).float().cuda()
+        self.model = VideoLayout(self.opt).cuda()
 
         # Data Loaders
         dataset_dict = {
@@ -191,8 +144,18 @@ class Trainer:
             "{}_files.txt")
         print("THE FPATH IS")
         print(fpath)
-        train_filenames = readlines(fpath.format("train"))
-        val_filenames = readlines(fpath.format("val"))
+
+        if self.opt.model_name == "videolayout":
+            readlines_fn = self.temporal_readlines
+            train_file = "train_temporal"
+            val_file = "val_temporal"
+        else:
+            readlines_fn = self.readlines
+            train_file = "train"
+            val_file = "val"
+
+        train_filenames = readlines_fn(fpath.format("train_file"))
+        val_filenames = readlines_fn(fpath.format("val_file"))
         self.val_filenames = val_filenames
         self.train_filenames = train_filenames
 
@@ -249,8 +212,6 @@ class Trainer:
                 print("Epoch: %d | Front Loss: %.4f | Front Discriminator Loss: %.4f"%
                       (self.epoch, loss["front_loss"], loss["front_loss_discr"]))
 
-
-
             if self.epoch % self.opt.log_frequency == 0:
                 self.save_model()
                 
@@ -273,15 +234,8 @@ class Trainer:
         for key, inpt in inputs.items():
             inputs[key] = inpt.to(self.device)
 
-        features = self.models["encoder"](inputs["color"])
+        outputs = self.model(inputs["color"])
 
-        if self.opt.type == "both":
-            outputs["topview"] = self.models["top_decoder"](features)
-            outputs["frontview"] = self.models["front_decoder"](features)
-        elif self.opt.type == "topview":
-            outputs[self.opt.type] = self.models["top_decoder"](features)
-        elif self.opt.type == "frontview":
-            outputs[self.opt.type] = self.models["front_decoder"](features)
         if validation:
             return outputs
         
@@ -293,73 +247,25 @@ class Trainer:
         return outputs, losses
 
     def run_epoch(self):
-        self.model_optimizer.step()
-        self.model_optimizer_D.step()
         loss = {}
         loss["top_loss"], loss["front_loss"], loss["top_loss_discr"], loss["front_loss_discr"] = 0.0, 0.0, 0.0, 0.0
         loss["loss"] = 0.0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.train_loader)):
 
             outputs, losses = self.process_batch(inputs)
-            self.model_optimizer.zero_grad()
-            self.model_optimizer_D.zero_grad()
-
-            
-            if(self.opt.type == "both" or self.opt.type == "topview"):
-                loss_D_top = 0
-                loss_G_top = 0
-                for i in range(self.opt.num_racks): # For top view
-                    gen_temp = outputs["topview"][:,3*i:3*i+3,:,:]
-                    gen_temp = torch.argmax(gen_temp, 1)
-                    gen_temp = torch.unsqueeze(gen_temp, 1).float()
-                    true_temp = inputs["topview"].float()[:,i,:,:]
-                    true_temp = torch.unsqueeze(true_temp, 1).float()
-                    fake_pred = self.models["top_discr"](gen_temp)
-                    real_pred = self.models["top_discr"](true_temp)
-                    loss_GAN = self.criterion_d(fake_pred, self.valid)
-                    loss_D_top += self.criterion_d(
-                        fake_pred, self.fake) + self.criterion_d(real_pred, self.valid)
-                    loss_G_top += self.opt.lambda_D * loss_GAN + losses["top_loss"]
-                loss_G_top.backward(retain_graph=True)                
-                loss_D_top.backward(retain_graph=True)
-
-
-            if(self.opt.type == "both" or self.opt.type == "frontview"):
-                loss_D_front = 0
-                loss_G_front = 0
-                for i in range(self.opt.num_racks): # For front view
-                    gen_temp = outputs["frontview"][:,3*i:3*i+3,:,:]
-                    gen_temp = torch.argmax(gen_temp, 1)
-                    gen_temp = torch.unsqueeze(gen_temp, 1).float()
-                    true_temp = inputs["frontview"].float()[:,i,:,:]
-                    true_temp = torch.unsqueeze(true_temp, 1).float()
-                    fake_pred = self.models["front_discr"](gen_temp)
-                    real_pred = self.models["front_discr"](true_temp)
-                    loss_GAN = self.criterion_d(fake_pred, self.valid)
-                    loss_D_front += self.criterion_d(
-                        fake_pred, self.fake) + self.criterion_d(real_pred, self.valid)
-                    loss_G_front += self.opt.lambda_D * loss_GAN + losses["front_loss"]
-                loss_G_front.backward(retain_graph=True)
-                loss_D_front.backward()
-
-            # losses["top_loss"].backward(retain_graph=True)
-            # losses["front_loss"].backward()     
-            self.model_optimizer.step()
-            self.model_optimizer_D.step()
-            
+            lossess = self.model.step(inputs, outputs, losses, self.epoch)
+        
             if(self.opt.type == "both" or self.opt.type == "topview"):
                 loss["top_loss"] += losses["top_loss"].item()
                 loss["loss"] += losses["top_loss"].item()
-                loss["top_loss_discr"] += loss_D_top.item() 
+                loss["top_loss_discr"] += lossess[loss_D_top].item() 
                 # loss["top_loss_discr"] += 0
             if(self.opt.type == "both" or self.opt.type == "frontview"):
                 loss["front_loss"] += losses["front_loss"].item()
                 loss["loss"] += losses["front_loss"].item()
-                loss["front_loss_discr"] += loss_D_front.item()
+                loss["front_loss_discr"] += lossess[loss_D_front].item()
                 # loss["front_loss_discr"] += 0
         
-        # loss["loss_norm"] = loss["loss"]/len(self.train_loader)
-        # loss["loss_discr"] /= len(self.train_loader)
         return loss
 
     def validation(self):
