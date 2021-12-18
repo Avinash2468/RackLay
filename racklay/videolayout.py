@@ -248,8 +248,7 @@ class VideoLayout(nn.Module):
         self.criterion_d = nn.BCEWithLogitsLoss()
         # self.encoder = Encoder(18, opt.height, opt.width, pretrained=True)
         
-        self.encoder = Encoder(
-            18, self.opt.height, self.opt.width, True)
+        self.encoder = Encoder(18, self.opt.height, self.opt.width, True)
 
         self.convlstm = ConvLSTM((8, 8), 128, 128, (3, 3), 1)
 
@@ -280,11 +279,6 @@ class VideoLayout(nn.Module):
                              + list(self.front_decoder.parameters())
             self.parameters_to_train_D = list(self.front_discr.parameters())
 
-        # self.decoder = Decoder(self.encoder.num_ch_enc, num_out_ch=num_ch_dec)
-        # self.discr   = Discriminator(num_ch_dec)
-
-        # self.parameters = list(self.encoder.parameters()) + list(self.convlstm.parameters())\
-                            #  + list(self.decoder.parameters())
         self.model_optimizer = optim.Adam(self.parameters, self.opt.lr)
         self.model_lr_scheduler = optim.lr_scheduler.StepLR(
                 self.model_optimizer, self.opt.scheduler_step_size, 0.1)
@@ -322,8 +316,6 @@ class VideoLayout(nn.Module):
             outputs["topview"] = self.top_decoder(z)
         elif self.opt.type == "frontview":
             outputs["frontview"] = self.front_decoder(z) 
-        # layout = self.decoder(z)
-        # outputs["topview"] = layout
         return outputs
 
     def reparameterize(self, is_training, mu, logvar):
@@ -375,8 +367,8 @@ class VideoLayout(nn.Module):
                 loss_G_front += self.opt.lambda_D * loss_GAN + losses["front_loss"]
             loss_G_front.backward(retain_graph=True)
             loss_D_front.backward()
-            loss["loss_G_front"] = loss_G_top
-            loss["loss_D_front"] = loss_D_top
+            loss["loss_G_front"] = loss_G_front
+            loss["loss_D_front"] = loss_D_front
 
         self.model_optimizer.step()
         self.discr_optimizer.step()

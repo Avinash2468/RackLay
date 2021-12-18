@@ -3,7 +3,7 @@ import os
 
 import racklay
 
-from racklay.dataloader import Loader
+from racklay.dataloader import Loader, AutoLay
 from racklay import VideoLayout
 import numpy as np
 import cv2
@@ -93,6 +93,8 @@ def get_args():
                         help="epoch to start training discriminator")
     parser.add_argument("--osm_path", type=str, default="./data/osm",
                         help="OSM path")
+    parser.add_argument("--seq_len", type=int, default=8,
+                        help="number of frames in an input")                    
     return parser.parse_args()
 
 
@@ -130,6 +132,7 @@ class Trainer:
 
         # Data Loaders
         dataset_dict = {
+                        "vLayoutLoader": AutoLay,
                         "warehouse": Loader,
                         "3Dobject": racklay.KITTIObject,
                         "odometry": racklay.KITTIOdometry,

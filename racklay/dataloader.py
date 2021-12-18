@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 import os
 import random
 
@@ -48,7 +50,7 @@ class Loader(data.Dataset):
         self.data_path = self.opt.data_path
         self.filenames = filenames
         self.is_train = is_train
-        self.height = self.opt.height
+        self.height = self.opt.height 
         self.width = self.opt.width
         self.interp = pil.ANTIALIAS
         # self.loader = pil_loader
@@ -114,14 +116,17 @@ class Loader(data.Dataset):
         frame_index = self.filenames[index]  # .split()
         # check this part from original code if the dataset is changed
         folder = self.opt.data_path
-
-        inputs["color"] = self.get_color(folder+"Images/", frame_index, do_flip)
-        if(self.opt.type == "both" or self.opt.type == "topview"):
-            inputs["topview"] = self.get_top(folder+"topLayouts/", frame_index, do_flip)
-        if(self.opt.type == "both" or self.opt.type == "frontview"):
-            inputs["frontview"] = self.get_front(folder+"frontLayouts/", frame_index, do_flip)
-
         
+        if self.opt.model_name == "videolayout":
+            inputs["color"] = torch.empty(self.opt.seq_len, 3, self.opt.width, self.opt.height)
+            for i in range(len(frame_index)):
+                inputs["color"][i, :]  = self.to_tensor(color_aug(self.resize(self.get_color(folder+"Images/", frame_index[i], do_flip))))
+
+            if(self.opt.type == "both" or self.opt.type == "topview"):
+                inputs["topview"] = self.get_top(folder+"topLayouts/", frame_index[-1], do_flip)
+            if(self.opt.type == "both" or self.opt.type == "frontview"):
+                inputs["frontview"] = self.get_front(folder+"frontLayouts/", frame_index[-1], do_flip)
+
         if do_color_aug:
             color_aug = transforms.ColorJitter.get_params(
                 self.brightness, self.contrast, self.saturation, self.hue)
@@ -129,7 +134,6 @@ class Loader(data.Dataset):
             color_aug = (lambda x: x)
 
         self.preprocess(inputs, color_aug)
-
         return inputs
 
     def get_color(self, folder, frame_index, do_flip):
@@ -165,3 +169,45 @@ class Loader(data.Dataset):
             tv = tv_copy
         return tv
 
+class AutoLay(Loader):
+    def __init__(self, *args, **kwargs):
+        super(AutoLay, self).__init__(*args, **kwargs)
+        self.root_dir = "./data/raw/"
+
+    def get_image_path(self, root_dir, frame_index):
+        img_path = os.path.join(root_dir, frame_index)
+        return img_path
+
+    def get_pseudolidar_path(self, root_dir, frame_index):
+        pseudolidar_path = os.path.join(root_dir, frame_index.replace("image_02/data", "image_02/pseudo_lidar_monodepth2_256"))
+        return pseudolidar_path.replace("png", "npy")
+
+    def get_road_path(self, root_dir, frame_index):
+        path = os.path.join(
+            root_dir, frame_index.replace(
+                "image_02/data", "road_bev_gt"))
+        return path
+
+    def get_osm_path(self, root_dir):
+        osm_file = np.random.choice(os.listdir(root_dir))
+        osm_path = os.path.join(root_dir, osm_file)
+
+        return osm_path
+
+    def get_static_gt_path(self, root_dir, frame_index):
+        path = os.path.join(
+            root_dir, frame_index.replace(
+                "image_02/data", "road_bev_gt"))
+        return path
+
+    def get_dynamic_gt_path(self, root_dir, frame_index):
+        path = os.path.join(root_dir, frame_index.replace("image_02/data", "car_bev_txt"))
+        return path
+
+    def get_vehicle_path(self, root_dir, frame_index):
+        path = os.path.join(root_dir, frame_index.replace("image_02/data", "car_bev_txt"))
+        return path
+
+    def get_lane_path(self, root_dir, frame_index):
+        path = os.path.join(root_dir, frame_index.replace("image_02/data", "numbered_bev"))
+        return path.replace("png", "npy")
