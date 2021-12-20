@@ -84,7 +84,14 @@ class Loader(data.Dataset):
             else:
                 inputs[key] = self.to_tensor(inputs[key])
 
-
+    # def preprocess(self, inputs, color_aug):
+    #     for key in inputs.keys():
+    #         if key != "color":
+    #             inputs[key] = self.to_tensor(inputs[key])
+    #         if "discr" in key:
+    #             inputs[key] = torch.squeeze(inputs[key])
+    #             inputs[key] = torch.transpose(torch.transpose(torch.nn.functional.one_hot(inputs[key].to(torch.int64), self.out_ch), 0, 2), 1, 2)
+    
     def get_image_path(self, root_dir, frame_index):
         img_path = os.path.join(root_dir, "%06d.jpg" % int(frame_index))
         #img_path = os.path.join(root_dir, "front" + "%06d.npy" % int(frame_index))

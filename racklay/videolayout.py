@@ -2,13 +2,16 @@ from collections import OrderedDict
 
 import numpy as np
 
+import torch
 import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
 
 from .resnet_encoder import ResnetEncoder
+from .convlstm import ConvLSTM
+from torch.autograd import Variable
 
 # Utils
-
 
 class ConvBlock(nn.Module):
     """Layer to perform a convolution followed by ELU
@@ -81,6 +84,9 @@ class Encoder(nn.Module):
         self.conv1 = Conv3x3(num_ch_enc[-1], 128)
         self.conv2 = Conv3x3(128, 128) 
         self.pool = nn.MaxPool2d(2)
+        self.relu = nn.ReLU()
+        self.mu_conv = Conv3x3(128, 128)
+        self.logvar_conv = Conv3x3(128, 128)
 
     def forward(self, x):
         """
@@ -104,10 +110,19 @@ class Encoder(nn.Module):
 
         #x = self.pool(self.conv1(x))
         #x = self.conv2(x)
-        #x = self.pool(x)  
+        #x = self.pool(x) 
 
-        return x
-
+        batch_size, seq_len, c, h, w = x.shape
+        x = x.view(batch_size*seq_len, c, h, w)
+        x = self.resnet_encoder(x)[-1]
+        x = self.pool(self.conv1(x))
+        x = self.conv2(x)
+        #x = self.pool(x)
+        x = self.relu(x)
+        mu, logvar = self.mu_conv(x), self.logvar_conv(x)
+        mu, logvar = mu.view(batch_size, seq_len, 128, 8, 8), logvar.view(batch_size, seq_len, 128, 8, 8)
+        #x = self.pool(x)
+        return mu, logvar
 
 class Decoder(nn.Module):
     """ Encodes the Image into low-dimensional feature representation
@@ -306,9 +321,9 @@ class VideoLayout(nn.Module):
 
     def forward(self, x, is_training=True):
         outputs = {}
-        mu = self.encoder(x)
-        # z = self.reparameterize(is_training, mu, logvar)
-        z = self.convlstm(mu)[0][0][:,-1]
+        mu, logvar = self.encoder(x)
+        z = self.reparameterize(is_training, mu, logvar)
+        z = self.convlstm(z)[0][0][:,-1]
         if self.opt.type == "both":
             outputs["topview"] = self.top_decoder(z)
             outputs["frontview"] = self.front_decoder(z)

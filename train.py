@@ -132,7 +132,6 @@ class Trainer:
 
         # Data Loaders
         dataset_dict = {
-                        "vLayoutLoader": AutoLay,
                         "warehouse": Loader,
                         "3Dobject": racklay.KITTIObject,
                         "odometry": racklay.KITTIOdometry,
@@ -209,7 +208,6 @@ class Trainer:
             elif(self.opt.type == "topview"):
                 print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f"%
                       (self.epoch, loss["top_loss"], loss["top_loss_discr"]))
-
 
             elif(self.opt.type == "frontview"):
                 print("Epoch: %d | Front Loss: %.4f | Front Discriminator Loss: %.4f"%
