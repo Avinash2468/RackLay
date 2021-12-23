@@ -1,3 +1,3 @@
 from .datasets import *
-from .model import *
+from .videolayout import *
 from .dataloader import *
