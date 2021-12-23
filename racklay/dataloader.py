@@ -93,20 +93,16 @@ class Loader(data.Dataset):
     #             inputs[key] = torch.transpose(torch.transpose(torch.nn.functional.one_hot(inputs[key].to(torch.int64), self.out_ch), 0, 2), 1, 2)
     
     def get_image_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "%06d.jpg" % int(frame_index))
-        #img_path = os.path.join(root_dir, "front" + "%06d.npy" % int(frame_index))
-
+        img_path = os.path.join(frame_index)
         return img_path
 
     def get_top_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "top"+"%06d.npy" % int(frame_index))
-
-        return img_path
+        img_path = os.path.join(frame_index)
+        return img_path.replace("img/", "topLayouts/top").replace("png", "npy")
 
     def get_front_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "front"+"%06d.npy" % int(frame_index))
-
-        return img_path
+        img_path = os.path.join(frame_index)
+        return img_path.replace("img/", "topLayouts/front").replace("png", "npy")
 
     def __len__(self):
         return len(self.filenames)
@@ -124,15 +120,21 @@ class Loader(data.Dataset):
         # check this part from original code if the dataset is changed
         folder = self.opt.data_path
         
+        if do_color_aug:
+            color_aug = transforms.ColorJitter.get_params(
+                self.brightness, self.contrast, self.saturation, self.hue)
+        else:
+            color_aug = (lambda x: x)
+
         if self.opt.model_name == "videolayout":
             inputs["color"] = torch.empty(self.opt.seq_len, 3, self.opt.width, self.opt.height)
             for i in range(len(frame_index)):
-                inputs["color"][i, :]  =self.get_color(folder+"Images/", frame_index[i], do_flip)
+                inputs["color"][i, :]  = self.to_tensor(color_aug(self.resize(self.get_color(folder, frame_index[i], do_flip))))
 
             if(self.opt.type == "both" or self.opt.type == "topview"):
                 inputs["topview"] = self.get_top(folder+"topLayouts/", frame_index[-1], do_flip)
             if(self.opt.type == "both" or self.opt.type == "frontview"):
-                inputs["frontview"] = self.get_front(folder+"frontLayouts/", frame_index[-1], do_flip)
+                inputs["frontview"] = self.get_front(folder+"topLayouts/", frame_index[-1], do_flip)
         else:
             inputs["color"] = self.get_color(folder+"Images/", frame_index, do_flip)
             if(self.opt.type == "both" or self.opt.type == "topview"):
