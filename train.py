@@ -138,8 +138,8 @@ class Trainer:
             train_file = "train"
             val_file = "val"
 
-        train_filenames = readlines_fn(fpath.format("train_file"))
-        val_filenames = readlines_fn(fpath.format("val_file"))
+        train_filenames = readlines_fn(fpath.format(train_file))
+        val_filenames = readlines_fn(fpath.format(val_file))
         self.val_filenames = val_filenames
         self.train_filenames = train_filenames
 
