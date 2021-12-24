@@ -97,24 +97,6 @@ def get_args():
                         help="number of frames in an input")                    
     return parser.parse_args()
 
-
-def readlines(filename):
-    """Read all the lines in a text file and return as a list
-    """
-    with open(filename, 'r') as f:
-        lines = f.read().splitlines()
-    return lines
-
-def temporal_readlines(self, filename):
-        f = open(filename, "r")
-        files = [k.split("\n")[:-1] for k in f.read().split(",")[:-1]]
-        temporal_files = []
-        for seq_files in files:
-            seq_files = [seq_files[0]]*self.opt.seq_len + seq_files
-            for i in range(self.opt.seq_len, len(seq_files)):
-                temporal_files.append(seq_files[i-self.opt.seq_len:i])
-        return temporal_files
-
 class Trainer:
     def __init__(self):
         self.opt = get_args()
@@ -229,6 +211,24 @@ class Trainer:
         plt.ylabel("Loss")
         plt.legend(loc='best')
         plt.savefig('Curves.png')
+
+
+    def readlines(filename):
+        """Read all the lines in a text file and return as a list
+        """
+        with open(filename, 'r') as f:
+            lines = f.read().splitlines()
+        return lines
+
+    def temporal_readlines(self, filename):
+        f = open(filename, "r")
+        files = [k.split("\n")[:-1] for k in f.read().split(",")[:-1]]
+        temporal_files = []
+        for seq_files in files:
+            seq_files = [seq_files[0]]*self.opt.seq_len + seq_files
+            for i in range(self.opt.seq_len, len(seq_files)):
+                temporal_files.append(seq_files[i-self.opt.seq_len:i])
+        return temporal_files
 
     def process_batch(self, inputs, validation=False):
         outputs = {}
