@@ -3,7 +3,7 @@ import os
 
 import racklay
 
-from racklay.dataloader import Loader, AutoLay
+from racklay.dataloader import Loader
 from racklay import VideoLayout
 import numpy as np
 import cv2
