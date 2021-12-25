@@ -104,10 +104,6 @@ class Encoder(nn.Module):
             | Shape: (batch_size, 128, img_height/128, img_width/128)
         """
 
-        batch_size, c, h, w = x.shape
-
-        x = self.resnet_encoder(x)[-1]
-
         #x = self.pool(self.conv1(x))
         #x = self.conv2(x)
         #x = self.pool(x) 
