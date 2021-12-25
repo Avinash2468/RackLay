@@ -181,14 +181,14 @@ class Decoder(nn.Module):
         """
 
         for i in range(4, -1, -1):
-            print(x.shape)
+            # print(x.shape)
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
             x = self.convs[("relu", i, 0)](x)
             x = upsample(x)
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
-            print(x.shape)
+            # print(x.shape)
 
         x = self.pool(x)
 

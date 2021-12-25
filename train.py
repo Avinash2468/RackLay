@@ -241,7 +241,7 @@ class Trainer:
             return outputs
         
         #print("PRINTING THE INPUT AND OUTPUT OCCUPANCY MAP SIZES")
-        #print(inputs["static"].size,outputs["topview"].size)
+        print(inputs["topview"].size,outputs["topview"].size)
         losses = self.compute_losses(inputs, outputs)
         losses["loss_discr"] = torch.zeros(1)
 
