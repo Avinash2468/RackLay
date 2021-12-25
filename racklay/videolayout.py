@@ -320,6 +320,7 @@ class VideoLayout(nn.Module):
         mu, logvar = self.encoder(x)
         z = self.reparameterize(is_training, mu, logvar)
         z = self.convlstm(z)[0][0][:,-1]
+        print(z.shape)
         if self.opt.type == "both":
             outputs["topview"] = self.top_decoder(z)
             outputs["frontview"] = self.front_decoder(z)
