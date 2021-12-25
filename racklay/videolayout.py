@@ -138,14 +138,14 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.num_output_channels = num_out_ch
         self.num_ch_enc = num_ch_enc
-        self.num_ch_dec = np.array([16, 32, 64, 128, 256, 512]) 
+        self.num_ch_dec = np.array([16, 32, 64, 128, 256]) 
         self.oct_map_size = oct_map_size
         self.pool = nn.MaxPool2d(2)
         # decoder
         self.convs = OrderedDict()
-        for i in range(5, -1, -1):
+        for i in range(4, -1, -1):
             # upconv_0
-            num_ch_in = 512 if i == 5 else self.num_ch_dec[i + 1]
+            num_ch_in = 128 if i == 4 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
             self.convs[("upconv", i, 0)] = nn.Conv2d(
                 num_ch_in, num_ch_out, 3, 1, 1)
@@ -180,14 +180,15 @@ class Decoder(nn.Module):
             | Shape: (batch_size, 2, occ_map_size, occ_map_size)
         """
 
-        for i in range(5, -1, -1):
-
+        for i in range(4, -1, -1):
+            print(x.shape)
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
             x = self.convs[("relu", i, 0)](x)
             x = upsample(x)
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
+            print(x.shape)
 
         x = self.pool(x)
 
