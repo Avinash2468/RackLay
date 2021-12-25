@@ -138,14 +138,14 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.num_output_channels = num_out_ch
         self.num_ch_enc = num_ch_enc
-        self.num_ch_dec = np.array([16, 32, 64, 128, 256]) 
+        self.num_ch_dec = np.array([4,8,16, 32, 64, 128, 256]) 
         self.oct_map_size = oct_map_size
         self.pool = nn.MaxPool2d(2)
         # decoder
         self.convs = OrderedDict()
-        for i in range(4, -1, -1):
+        for i in range(6, -1, -1):
             # upconv_0
-            num_ch_in = 128 if i == 4 else self.num_ch_dec[i + 1]
+            num_ch_in = 128 if i == 6 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
             self.convs[("upconv", i, 0)] = nn.Conv2d(
                 num_ch_in, num_ch_out, 3, 1, 1)
@@ -179,8 +179,8 @@ class Decoder(nn.Module):
             Batch of output Layouts
             | Shape: (batch_size, 2, occ_map_size, occ_map_size)
         """
-
-        for i in range(4, -1, -1):
+        print("BEFORE DECODER" , x.shape)
+        for i in range(6, -1, -1):
             # print(x.shape)
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
@@ -189,8 +189,10 @@ class Decoder(nn.Module):
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
             # print(x.shape)
-
+        
+        print("AFTER INITIAL CONV" , x.shape)
         x = self.pool(x)
+        print("AFTER POOLING",x.shape)
 
         if is_training:
             x = self.convs["topview"](x)
@@ -259,18 +261,20 @@ class VideoLayout(nn.Module):
         self.opt = opt
         self.criterion_d = nn.BCEWithLogitsLoss()
         # self.encoder = Encoder(18, opt.height, opt.width, pretrained=True)
-        
+        # checkM()
         self.encoder = Encoder(18, self.opt.height, self.opt.width, True)
-
+        # checkM()
         self.convlstm = ConvLSTM((8, 8), 128, 128, (3, 3), 1)
-
+        # checkM()
         if self.opt.type == "both":
             self.top_decoder = Decoder(
                 self.encoder.resnet_encoder.num_ch_enc, 3*self.opt.num_racks, self.opt.occ_map_size)
+            # checkM()    
             self.top_discr = Discriminator()
             self.front_discr = Discriminator()
             self.front_decoder = Decoder(
                 self.encoder.resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
+            # checkM()    
             self.parameters = list(self.encoder.parameters()) + list(self.convlstm.parameters())\
                              + list(self.top_decoder.parameters()) + list(self.front_decoder.parameters())
             self.parameters_to_train_D = list(self.top_discr.parameters()) + list(self.front_discr.parameters())
@@ -278,6 +282,7 @@ class VideoLayout(nn.Module):
         elif self.opt.type == "topview":
             self.top_decoder = Decoder(
                 self.encoder.resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
+            # checkM()    
             self.top_discr = Discriminator()
             self.parameters = list(self.encoder.parameters()) + list(self.convlstm.parameters())\
                              + list(self.top_decoder.parameters())
@@ -286,6 +291,7 @@ class VideoLayout(nn.Module):
         elif self.opt.type == "frontview":
             self.front_decoder = Decoder(
                 self.encoder.resnet_encoder.num_ch_enc, 3*self.opt.num_racks,self.opt.occ_map_size)
+            # checkM()    
             self.front_discr = Discriminator()
             self.parameters = list(self.encoder.parameters()) + list(self.convlstm.parameters())\
                              + list(self.front_decoder.parameters())
@@ -327,6 +333,7 @@ class VideoLayout(nn.Module):
             outputs["frontview"] = self.front_decoder(z)
         elif self.opt.type == "topview":
             outputs["topview"] = self.top_decoder(z)
+            print("OUTPUT AFTER DECODER",outputs["topview"].shape)
         elif self.opt.type == "frontview":
             outputs["frontview"] = self.front_decoder(z) 
         return outputs
@@ -387,3 +394,10 @@ class VideoLayout(nn.Module):
         self.discr_optimizer.step()
         
         return loss
+
+# def checkM():
+#     t = torch.cuda.get_device_properties(0).total_memory
+#     r = torch.cuda.memory_reserved(0)
+#     a = torch.cuda.memory_allocated(0)
+#     f = r-a  # free inside reserved
+#     print(t, r, a, f)

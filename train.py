@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-
+import GPUtil  
 import tqdm
 
 from utils import mean_IU, mean_precision
@@ -108,9 +108,11 @@ class Trainer:
         self.criterion_d = nn.BCEWithLogitsLoss()
         self.parameters_to_train = []
         self.parameters_to_train_D = []
-
+        print(torch.cuda.is_available())
+        GPUtil.showUtilization()
         # Initializing models
         self.model = VideoLayout(self.opt).cuda()
+        GPUtil.showUtilization()
 
         # Data Loaders
         dataset_dict = {
