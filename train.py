@@ -108,12 +108,10 @@ class Trainer:
         self.criterion_d = nn.BCEWithLogitsLoss()
         self.parameters_to_train = []
         self.parameters_to_train_D = []
-        print(torch.cuda.is_available())
-        GPUtil.showUtilization()
+
         # Initializing models
         self.model = VideoLayout(self.opt).cuda()
-        GPUtil.showUtilization()
-
+        
         # Data Loaders
         dataset_dict = {
                         "warehouse": Loader,
@@ -144,9 +142,6 @@ class Trainer:
         val_filenames = readlines_fn(fpath.format(val_file))
         self.val_filenames = val_filenames
         self.train_filenames = train_filenames
-
-        #print(self.val_filenames, self.train_filenames)
-        # print(train_dataset)
 
         train_dataset = self.dataset(self.opt, train_filenames)
         val_dataset = self.dataset(self.opt, val_filenames, is_train=False)
@@ -243,7 +238,7 @@ class Trainer:
             return outputs
         
         #print("PRINTING THE INPUT AND OUTPUT OCCUPANCY MAP SIZES")
-        print(inputs["topview"].size,outputs["topview"].size)
+        # print(inputs["topview"].size,outputs["topview"].size)
         losses = self.compute_losses(inputs, outputs)
         losses["loss_discr"] = torch.zeros(1)
 
@@ -261,12 +256,12 @@ class Trainer:
             if(self.opt.type == "both" or self.opt.type == "topview"):
                 loss["top_loss"] += losses["top_loss"].item()
                 loss["loss"] += losses["top_loss"].item()
-                loss["top_loss_discr"] += lossess[loss_D_top].item() 
+                loss["top_loss_discr"] += lossess["loss_D_top"].item() 
                 # loss["top_loss_discr"] += 0
             if(self.opt.type == "both" or self.opt.type == "frontview"):
                 loss["front_loss"] += losses["front_loss"].item()
                 loss["loss"] += losses["front_loss"].item()
-                loss["front_loss_discr"] += lossess[loss_D_front].item()
+                loss["front_loss_discr"] += lossess["loss_D_front"].item()
                 # loss["front_loss_discr"] += 0
         
         return loss
@@ -310,21 +305,22 @@ class Trainer:
             losses["front_loss"] = self.compute_topview_loss(
                                             outputs[self.opt.type],
                                             inputs[self.opt.type])
-
         return losses
 
     def compute_topview_loss(self, outputs, true_top_view):
-
         generated_top_view = outputs;       
         true_top_view = true_top_view.long()#.reshape(self.opt.batch_size, self.opt.occ_map_size, self.opt.occ_map_size)
+
         loss = nn.CrossEntropyLoss(weight=torch.Tensor([1., 5., 5.]).cuda())
         loss_list = []
         for i in range(self.opt.num_racks):
             gen_temp = generated_top_view[:,3*i:3*i+3,:,:]
             true_temp = true_top_view[:,i,:,:]
-            loss_temp = loss(gen_temp, true_temp)
+            loss_temp = loss(gen_temp, true_temp) 
+            # print(loss_temp.mean().data)
+            # loss_list.append(loss_temp.mean().cpu().detach().numpy())
             loss_list.append(loss_temp.mean())
-        return sum(loss_list)
+        return np.mean(np.array(loss_list))
 
     def save_model(self):
         save_path = os.path.join(
@@ -346,7 +342,7 @@ class Trainer:
 
             torch.save(state_dict, model_path)
         optim_path = os.path.join(save_path, "{}.pth".format("adam"))
-        torch.save(self.model_optimizer.state_dict(), optim_path)
+        torch.save(self.model.model_optimizer.state_dict(), optim_path)
 
     def load_model(self):
         """Load model(s) from disk
@@ -378,7 +374,7 @@ class Trainer:
         if os.path.isfile(optimizer_load_path):
             print("Loading Adam weights")
             optimizer_dict = torch.load(optimizer_load_path)
-            self.model_optimizer.load_state_dict(optimizer_dict)
+            self.model.model_optimizer.load_state_dict(optimizer_dict)
         else:
             print("Cannot find Adam weights so Adam is randomly initialized")
 

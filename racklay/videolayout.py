@@ -179,7 +179,7 @@ class Decoder(nn.Module):
             Batch of output Layouts
             | Shape: (batch_size, 2, occ_map_size, occ_map_size)
         """
-        print("BEFORE DECODER" , x.shape)
+        # print("BEFORE DECODER" , x.shape)
         for i in range(6, -1, -1):
             # print(x.shape)
             x = self.convs[("upconv", i, 0)](x)
@@ -190,9 +190,9 @@ class Decoder(nn.Module):
             x = self.convs[("norm", i, 1)](x)
             # print(x.shape)
         
-        print("AFTER INITIAL CONV" , x.shape)
+        # print("AFTER INITIAL CONV" , x.shape)
         x = self.pool(x)
-        print("AFTER POOLING",x.shape)
+        # print("AFTER POOLING",x.shape)
 
         if is_training:
             x = self.convs["topview"](x)
@@ -327,13 +327,13 @@ class VideoLayout(nn.Module):
         mu, logvar = self.encoder(x)
         z = self.reparameterize(is_training, mu, logvar)
         z = self.convlstm(z)[0][0][:,-1]
-        print(z.shape)
+        # print(z.shape)
         if self.opt.type == "both":
             outputs["topview"] = self.top_decoder(z)
             outputs["frontview"] = self.front_decoder(z)
         elif self.opt.type == "topview":
             outputs["topview"] = self.top_decoder(z)
-            print("OUTPUT AFTER DECODER",outputs["topview"].shape)
+            # print("OUTPUT AFTER DECODER",outputs["topview"].shape)
         elif self.opt.type == "frontview":
             outputs["frontview"] = self.front_decoder(z) 
         return outputs

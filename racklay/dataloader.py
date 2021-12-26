@@ -73,24 +73,24 @@ class Loader(data.Dataset):
         self.resize = transforms.Resize(
             (self.height, self.width), interpolation=self.interp)
 
-    # def preprocess(self, inputs, color_aug):
-
-    #     inputs["color"] = color_aug(self.resize(inputs["color"]))
-
-    #     for key in inputs.keys():
-    #         if key != "color" and "discr" not in key:
-    #             inputs[key] = process_topview(inputs[key], self.opt.occ_map_size,self.opt.num_racks)
-    #             inputs[key] = torch.from_numpy(inputs[key])
-    #         else:
-    #             inputs[key] = self.to_tensor(inputs[key])
-
     def preprocess(self, inputs, color_aug):
+
+        # inputs["color"] = color_aug(self.resize(inputs["color"]))
+
         for key in inputs.keys():
-            if key != "color":
+            if key != "color" and "discr" not in key:
+                inputs[key] = process_topview(inputs[key], self.opt.occ_map_size,self.opt.num_racks)
+                inputs[key] = torch.from_numpy(inputs[key])
+            elif  key != "color":
                 inputs[key] = self.to_tensor(inputs[key])
-            if "discr" in key:
-                inputs[key] = torch.squeeze(inputs[key])
-                inputs[key] = torch.transpose(torch.transpose(torch.nn.functional.one_hot(inputs[key].to(torch.int64), self.out_ch), 0, 2), 1, 2)
+
+    # def preprocess(self, inputs, color_aug):
+    #     for key in inputs.keys():
+    #         if key != "color":
+    #             inputs[key] = self.to_tensor(inputs[key])
+    #         if "discr" in key:
+    #             inputs[key] = torch.squeeze(inputs[key])
+    #             inputs[key] = torch.transpose(torch.transpose(torch.nn.functional.one_hot(inputs[key].to(torch.int64), self.out_ch), 0, 2), 1, 2)
     
     def get_image_path(self, root_dir, frame_index):
         img_path = os.path.join(frame_index)
