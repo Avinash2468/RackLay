@@ -328,6 +328,7 @@ class Trainer:
 
         loss = nn.CrossEntropyLoss(weight=torch.Tensor([1., 5., 5.]).cuda())
         loss_list = []
+        
         for i in range(self.opt.num_racks):
             gen_temp = generated_top_view[:,3*i:3*i+3,:,:]
             true_temp = true_top_view[:,i,:,:]
