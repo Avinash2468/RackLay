@@ -248,8 +248,8 @@ class Trainer:
         loss = {}
         loss["top_loss"], loss["front_loss"], loss["top_loss_discr"], loss["front_loss_discr"] = 0.0, 0.0, 0.0, 0.0
         loss["loss"] = 0.0
+        num_batches = 0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.train_loader)):
-
             outputs, losses = self.process_batch(inputs)
             lossess = self.model.step(inputs, outputs, losses, self.epoch)
         
@@ -263,7 +263,15 @@ class Trainer:
                 loss["loss"] += losses["front_loss"].item()
                 loss["front_loss_discr"] += lossess["loss_D_front"].item()
                 # loss["front_loss_discr"] += 0
+            
+            num_batches += 1
         
+        for key in loss.keys():
+            loss[key] = loss[key]/num_batches
+        
+        # print(loss)
+
+
         return loss
 
     def validation(self):
@@ -271,6 +279,7 @@ class Trainer:
         loss = {}
         loss["top_loss"], loss["front_loss"], loss["top_loss_discr"], loss["front_loss_discr"] = 0.0, 0.0, 0.0, 0.0
         loss["loss"] = 0.0
+        num_batches = 0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.val_loader)):
             outputs, losses = self.process_batch(inputs)
 
@@ -279,12 +288,18 @@ class Trainer:
             if(self.opt.type == "both" or self.opt.type == "frontview"):
                 loss["front_loss"] += losses["front_loss"].item()
             
-        print(" Top Loss: %.4f  | Front Loss: %.4f "%( loss["top_loss"], loss["front_loss"])) 
+            num_batches += 1
+        
 
         if(self.opt.type == "both" or self.opt.type == "topview"):
             loss["loss"] += losses["top_loss"].item() 
         if(self.opt.type == "both" or self.opt.type == "frontview"):
             loss["loss"] += losses["front_loss"].item() 
+        
+        for key in loss.keys():
+            loss[key] = loss[key]/num_batches
+        
+        print("VALIDATION Top Loss: %.4f  | Front Loss: %.4f "%( loss["top_loss"], loss["front_loss"])) 
         return loss
 
     def compute_losses(self, inputs, outputs):
@@ -316,11 +331,14 @@ class Trainer:
         for i in range(self.opt.num_racks):
             gen_temp = generated_top_view[:,3*i:3*i+3,:,:]
             true_temp = true_top_view[:,i,:,:]
-            loss_temp = loss(gen_temp, true_temp) 
-            # print(loss_temp.mean().data)
-            # loss_list.append(loss_temp.mean().cpu().detach().numpy())
-            loss_list.append(loss_temp.mean())
-        return np.mean(np.array(loss_list))
+            # print("loss between shapes" , gen_temp.shape , true_temp.shape)
+            loss_temp = loss(gen_temp, true_temp)
+            loss_list.append(loss_temp) #no need to mean as cross entropy already averages over pixels*batchsize
+        
+        # print(sum(loss_list))
+        # print(type(sum(loss_list)))
+        # print(sum(loss_list).shape)
+        return sum(loss_list)
 
     def save_model(self):
         save_path = os.path.join(
