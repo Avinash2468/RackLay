@@ -111,6 +111,21 @@ class Trainer:
 
         # Initializing models
         self.model = VideoLayout(self.opt).cuda()
+        self.models["encoder"] = self.model.encoder
+
+        if self.opt.type == "both":
+            self.models["top_decoder"] = self.model.top_decoder
+            self.models["top_discr"] = self.model.top_discr
+            self.models["front_discr"] = self.model.front_discr
+            self.models["front_decoder"] = self.model.front_decoder
+
+        elif self.opt.type == "topview":
+            self.models["top_decoder"] = self.model.top_decoder
+            self.models["top_discr"] = self.model.top_discr
+
+        elif self.opt.type == "frontview":
+            self.models["front_decoder"] = self.model.front_decoder
+            self.models["front_discr"] = self.model.front_discr
         
         # Data Loaders
         dataset_dict = {
