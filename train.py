@@ -113,6 +113,8 @@ class Trainer:
         self.model = VideoLayout(self.opt).cuda()
         self.models["encoder"] = self.model.encoder
 
+        self.models["convlstm"] = self.model.convlstm
+
         if self.opt.type == "both":
             self.models["top_decoder"] = self.model.top_decoder
             self.models["top_discr"] = self.model.top_discr
@@ -240,6 +242,9 @@ class Trainer:
             seq_files = [seq_files[0]]*self.opt.seq_len + seq_files
             for i in range(self.opt.seq_len, len(seq_files)):
                 temporal_files.append(seq_files[i-self.opt.seq_len:i])
+        # print(temporal_files)
+        # for tf in temporal_files:
+        #     print(tf)
         return temporal_files
 
     def process_batch(self, inputs, validation=False):
@@ -247,7 +252,11 @@ class Trainer:
         for key, inpt in inputs.items():
             inputs[key] = inpt.to(self.device)
 
+        # print("INCOMING DIMENSIONS" , inputs["color"].shape)
         outputs = self.model(inputs["color"])
+        # print("OUTGOING OUTPUT" , end=" ")
+        # for key in outputs.keys():
+        #     print(outputs[key].shape , end=" ")
 
         if validation:
             return outputs
@@ -265,6 +274,7 @@ class Trainer:
         loss["loss"] = 0.0
         num_batches = 0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.train_loader)):
+            print("BATCH" , batch_idx)
             outputs, losses = self.process_batch(inputs)
             lossess = self.model.step(inputs, outputs, losses, self.epoch)
         
@@ -318,6 +328,7 @@ class Trainer:
         return loss
 
     def compute_losses(self, inputs, outputs):
+        # print("COMPUTE LOSSES BETWEEN" , inputs["topview"].shape , outputs["topview"].shape)
         losses = {}
         if self.opt.type == "both":
             losses["top_loss"] = self.compute_topview_loss(
@@ -375,6 +386,7 @@ class Trainer:
                 state_dict["width"] = self.opt.width
 
             torch.save(state_dict, model_path)
+            print(model_name , "saved")
         optim_path = os.path.join(save_path, "{}.pth".format("adam"))
         torch.save(self.model.model_optimizer.state_dict(), optim_path)
 
