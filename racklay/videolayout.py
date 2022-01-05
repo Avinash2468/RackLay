@@ -107,7 +107,6 @@ class Encoder(nn.Module):
         #x = self.pool(self.conv1(x))
         #x = self.conv2(x)
         #x = self.pool(x) 
-
         batch_size, seq_len, c, h, w = x.shape
         x = x.view(batch_size*seq_len, c, h, w)
         x = self.resnet_encoder(x)[-1]

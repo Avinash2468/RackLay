@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 
 import cv2
 
-from racklay import model
+from racklay import videolayout
+# from .train import temporal_readlines
 
 import numpy as np
 
@@ -16,12 +17,11 @@ import torch
 
 from torchvision import transforms
 
-
 def get_args():
     parser = argparse.ArgumentParser(
         description="Testing arguments for Racklay")
-    parser.add_argument("--image_path", type=str,
-                        help="path to folder of images", required=True)
+    parser.add_argument("--image_paths", type=str,
+                        help="path of file containing temporal image paths", required=True)
     parser.add_argument("--model_path", type=str,
                         help="path to Racklay model", required=True)
     parser.add_argument( 
@@ -37,8 +37,24 @@ def get_args():
                         help="Max number of racks")
     parser.add_argument("--occ_map_size", type=int, default=128,
                         help="size of topview occupancy map")
+    parser.add_argument("--seq_len", type=int, default=8,
+                        help="number of frames in an input")                    
     return parser.parse_args()
 
+def sequence_readlines(filename , seq_len):
+    f = open(filename, "r")
+    files = [k.split("\n")[:-1] for k in f.read().split(",")[:-1]]
+    sequence_files = []
+    temporal_files = []
+    for seq_files in files:
+        temporal_files[:] = []
+        seq_files = [seq_files[0]]*seq_len + seq_files
+        for i in range(seq_len, len(seq_files)):
+            temporal_files.append(seq_files[i-seq_len:i])
+        
+        sequence_files.append(temporal_files)
+    # print(sequence_files)
+    return sequence_files
 
 def save_topview(idx, tv_temp, name_dest_im):
     print("PRINTING THE TEST OUTPUT SHAPE")
@@ -55,16 +71,20 @@ def save_topview(idx, tv_temp, name_dest_im):
         tv[tv==2] = 255
         dir_name = os.path.dirname(name_dest_im)
         if not os.path.exists(dir_name):
+            print(dir_name)
             os.makedirs(dir_name)
         cv2.imwrite(name_dest_im + "rackno_" +str(i) + ".png", tv.cpu().numpy())
 
     print("Saved prediction to {}".format(name_dest_im))
 
-
 def npy_loader(path):
     return np.load(path,allow_pickle=True)
-    
-    
+
+def pil_loader(path):
+    with open(path, 'rb') as f:
+        with pil.open(f) as img:
+            return img.convert('RGB')
+
 def test(args):
     models = {}
     device = torch.device("cuda")
@@ -72,34 +92,41 @@ def test(args):
     encoder_dict = torch.load(encoder_path, map_location=device)
     feed_height = encoder_dict["height"]
     feed_width = encoder_dict["width"]
-    models["encoder"] = model.Encoder(18, feed_width, feed_height, False)
+    seq_len = args.seq_len
+    to_tensor = transforms.ToTensor()
+
+    models["encoder"] = videolayout.Encoder(18, feed_height, feed_width, False)
     filtered_dict_enc = {
         k: v for k,
         v in encoder_dict.items() if k in models["encoder"].state_dict()}
     models["encoder"].load_state_dict(filtered_dict_enc)
 
+    models["convlstm"] = videolayout.ConvLSTM((8, 8), 128, 128, (3, 3), 1)
+    convlstm_path = os.path.join(args.model_path, "convlstm.pth")
+    models["convlstm"].load_state_dict(torch.load(convlstm_path, map_location=device))
+    
     if args.type == "both":
         top_decoder_path = os.path.join(
             args.model_path, "top_decoder.pth")
         front_decoder_path = os.path.join(
             args.model_path, "front_decoder.pth")
-        models["top_decoder"] = model.Decoder(
+        models["top_decoder"] = videolayout.Decoder(
             models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
         models["top_decoder"].load_state_dict(
             torch.load(top_decoder_path, map_location=device))
-        models["front_decoder"] = model.Decoder(
+        models["front_decoder"] = videolayout.Decoder(
             models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
         models["front_decoder"].load_state_dict(
             torch.load(front_decoder_path, map_location=device))
     elif args.type == "topview":
         decoder_path = os.path.join(args.model_path, "top_decoder.pth")
-        models["top_decoder"] = model.Decoder(
+        models["top_decoder"] = videolayout.Decoder(
             models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
         models["top_decoder"].load_state_dict(
             torch.load(decoder_path, map_location=device))
     elif args.type == "frontview":
         decoder_path = os.path.join(args.model_path, "front_decoder.pth")
-        models["front_decoder"] = model.Decoder(
+        models["front_decoder"] = videolayout.Decoder(
             models["encoder"].resnet_encoder.num_ch_enc, 3*args.num_racks,args.occ_map_size)
         models["front_decoder"].load_state_dict(
             torch.load(decoder_path, map_location=device))
@@ -108,89 +135,78 @@ def test(args):
         models[key].to(device)
         models[key].eval()
 
-    if os.path.isfile(args.image_path):
-        # Only testing on a single image
-        paths = [args.image_path]
-        output_directory = os.path.dirname(args.image_path)
-    elif os.path.isdir(args.image_path):
-        # Searching folder for images
-        paths = glob.glob(os.path.join(
-            args.image_path, '*.{}'.format(args.ext)))
-        output_directory = args.out_dir
-        try:
-            os.mkdir(output_directory)
-        except BaseException:
-            pass
+    sequences = []
+    if os.path.isfile(args.image_paths):
+        sequences[:] = sequence_readlines(args.image_paths , args.seq_len)
     else:
         raise Exception(
-            "Can not find args.image_path: {}".format(
-                args.image_path))
+            "Can not find args.image_paths: {}".format(
+                args.image_paths))
 
-    print("-> Predicting on {:d} test images".format(len(paths)))
-
-    # PREDICTING ON EACH IMAGE IN TURN
+    print("-> Predicting on {:d} test sequences".format(len(sequences)))
+    print("Each sequence has {} {}-framed mini-sequences".format(len(sequences[0]) , len(sequences[0][0])))
+    # for i in range(len(sequences)):
+    #     print()
+    #     print("SEQUENCE ",i)
+    #     for mini_seq in sequences[i]:
+    #         print(mini_seq)
+        
+    # PREDICTING ON EACH SEQUENCE
     with torch.no_grad():
-        for idx, image_path in enumerate(paths):
+        for idx, seq in enumerate(sequences):
+            print(seq.shape)
+            output_layouts = [] # append all outputs for this sequence here
+            # predicting on each mini 8-sized sequence in this sequence
+            for mini_idx, mini_seq in enumerate(seq):
+                print(mini_seq)
+                output_name = os.path.splitext(mini_seq[-1])[0]
+                inputs = torch.empty(seq_len, 3, feed_width, feed_height)
+                for mini_frame_idx, mini_frame_seq in enumerate(mini_seq):
+                    print(mini_frame_seq.shape)
+                    img_path = os.path.join(mini_frame_seq)
+                    color = pil_loader(img_path)
+                    color = color.resize((feed_width, feed_height), pil.LANCZOS)
+                    inputs[mini_frame_idx, :]  = to_tensor(color)
+                inputs = inputs.unsqueeze(0)
 
-            # Load image and preprocess
-            input_image = pil.open(image_path).convert('RGB')
-            #img = npy_loader(image_path)
-            #input_image = Image.fromarray(img.astype('uint8'), 'RGB')
-            original_width, original_height = input_image.size
-            input_image = input_image.resize(
-                (feed_width, feed_height), pil.LANCZOS)
-            print("INPUT IMAGE SHAPE")
-            print(input_image.size)
-            input_image = transforms.ToTensor()(input_image).unsqueeze(0)
+                input_seq = inputs.to(device)
+                mu, logvar = models["encoder"](input_seq)
+                z = mu
+                z = models["convlstm"](z)[0][0][:,-1]
 
-            # PREDICTION
-            input_image = input_image.to(device)
-            features = models["encoder"](input_image)
-            output_name = os.path.splitext(os.path.basename(image_path))[0]
-            print(
-                "Processing {:d} of {:d} images- ".format(idx + 1, len(paths)))
-            if args.type == "both":
-                top_tv = models["top_decoder"](
-                    features, is_training=False)
-                front_tv = models["front_decoder"](
-                    features, is_training=False)
-                save_topview(
-                    idx,
-                    top_tv,
-                    os.path.join(
-                        args.out_dir,
-                        "top",
-                        "{}".format(output_name)))
-                save_topview(
-                    idx,
-                    front_tv,
-                    os.path.join(
-                        args.out_dir,
-                        "front",
-                        "{}".format(output_name)))
-            elif args.type == "topview":
-                tv = models["top_decoder"](features, is_training=False)
-                save_topview(
-                    idx,
-                    tv,
-                    os.path.join(
-                        args.out_dir,
-                        args.type,
-                        "{}".format(output_name)))
-            elif args.type == "frontview":
-                tv = models["front_decoder"](features, is_training=False)
-                save_topview(
-                    idx,
-                    tv,
-                    os.path.join(
-                        args.out_dir,
-                        args.type,
-                        "{}".format(output_name)))
+                if args.type == "both":
+                    top_tv = models["top_decoder"](z , is_training=False)
+                    front_tv = models["front_decoder"](z, is_training=False)
+                    output_name_top = output_name.replace("img/", "Results/topview/")
+                    save_topview(
+                        idx,
+                        top_tv,
+                        os.path.join("{}".format(output_name_top)))
 
-    print('-> Done!')
+                    output_name_front = output_name.replace("Results/topview/", "Results/frontview/")
+                    save_topview(
+                        idx,
+                        front_tv,
+                        os.path.join("{}".format(output_name_front)))
 
+                elif args.type == "topview":
+                    tv = models["top_decoder"](z, is_training=False)
+                    output_name_top = output_name.replace("img/", "Results/topview/")
+                    save_topview(
+                        idx,
+                        tv,
+                        os.path.join("{}".format(output_name_top)))
+
+                elif args.type == "frontview":
+                    tv = models["front_decoder"](z, is_training=False) 
+                    output_name_front = output_name.replace("img/", "Results/frontview/")
+                    save_topview(
+                        idx,
+                        tv,
+                        os.path.join("{}".format(output_name_front)))
+
+        print('-> Done!')    
 
 if __name__ == "__main__":
     args = get_args()
     test(args)
-
