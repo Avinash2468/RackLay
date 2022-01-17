@@ -183,7 +183,7 @@ def test(args):
                         top_tv,
                         os.path.join("{}".format(output_name_top)))
 
-                    output_name_front = output_name.replace("Results/topview/", "Results/frontview/")
+                    output_name_front = output_name.replace("topview/", "frontview/")
                     save_topview(
                         idx,
                         front_tv,
