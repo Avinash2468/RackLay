@@ -198,8 +198,8 @@ class Trainer:
         
             loss = self.run_epoch()
             if(self.opt.type == "both"):
-                print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f | Front Loss: %.4f | Front Discriminator Loss: %.4f"%
-                      (self.epoch, loss["top_loss"], loss["top_loss_discr"], loss["front_loss"], loss["front_loss_discr"]))
+                print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f | Front Loss: %.4f | Front Discriminator Loss: %.4f | Total Loss: %4f"%
+                      (self.epoch, loss["top_loss"], loss["top_loss_discr"], loss["front_loss"], loss["front_loss_discr"], loss["loss"]))
 
             elif(self.opt.type == "topview"):
                 print("Epoch: %d | Top Loss: %.4f | Top Discriminator Loss: %.4f"%
@@ -225,7 +225,6 @@ class Trainer:
         plt.ylabel("Loss")
         plt.legend(loc='best')
         plt.savefig('Curves.png')
-
 
     def readlines(filename):
         """Read all the lines in a text file and return as a list
@@ -295,8 +294,6 @@ class Trainer:
             loss[key] = loss[key]/num_batches
         
         # print(loss)
-
-
         return loss
 
     def validation(self):
@@ -310,21 +307,22 @@ class Trainer:
 
             if(self.opt.type == "both" or self.opt.type == "topview"):
                 loss["top_loss"] += losses["top_loss"].item()
+                loss["loss"] += losses["top_loss"].item()
             if(self.opt.type == "both" or self.opt.type == "frontview"):
                 loss["front_loss"] += losses["front_loss"].item()
-            
+                loss["loss"] += losses["top_loss"].item()
+
             num_batches += 1
         
-
-        if(self.opt.type == "both" or self.opt.type == "topview"):
-            loss["loss"] += losses["top_loss"].item() 
-        if(self.opt.type == "both" or self.opt.type == "frontview"):
-            loss["loss"] += losses["front_loss"].item() 
+        # if(self.opt.type == "both" or self.opt.type == "topview"):
+        #     loss["loss"] += loss["top_loss"].item() 
+        # if(self.opt.type == "both" or self.opt.type == "frontview"):
+        #     loss["loss"] += loss["front_loss"].item() 
         
         for key in loss.keys():
             loss[key] = loss[key]/num_batches
         
-        print("VALIDATION Top Loss: %.4f  | Front Loss: %.4f "%( loss["top_loss"], loss["front_loss"])) 
+        print("VALIDATION Top Loss: %.4f  | Front Loss: %.4f | Total Loss: %.4f"%( loss["top_loss"], loss["front_loss"], loss["loss"])) 
         return loss
 
     def compute_losses(self, inputs, outputs):

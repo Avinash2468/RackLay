@@ -154,7 +154,7 @@ def test(args):
     # PREDICTING ON EACH SEQUENCE
     with torch.no_grad():
         for idx, seq in enumerate(sequences):
-            print(seq.shape)
+            #print(seq.shape)
             output_layouts = [] # append all outputs for this sequence here
             # predicting on each mini 8-sized sequence in this sequence
             for mini_idx, mini_seq in enumerate(seq):
@@ -162,7 +162,7 @@ def test(args):
                 output_name = os.path.splitext(mini_seq[-1])[0]
                 inputs = torch.empty(seq_len, 3, feed_width, feed_height)
                 for mini_frame_idx, mini_frame_seq in enumerate(mini_seq):
-                    print(mini_frame_seq.shape)
+                    #print(mini_frame_seq.shape)
                     img_path = os.path.join(mini_frame_seq)
                     color = pil_loader(img_path)
                     color = color.resize((feed_width, feed_height), pil.LANCZOS)
