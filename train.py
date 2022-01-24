@@ -273,7 +273,7 @@ class Trainer:
         loss["loss"] = 0.0
         num_batches = 0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.train_loader)):
-            print("BATCH" , batch_idx)
+            # print("BATCH" , batch_idx)
             outputs, losses = self.process_batch(inputs)
             lossess = self.model.step(inputs, outputs, losses, self.epoch)
         
@@ -310,15 +310,10 @@ class Trainer:
                 loss["loss"] += losses["top_loss"].item()
             if(self.opt.type == "both" or self.opt.type == "frontview"):
                 loss["front_loss"] += losses["front_loss"].item()
-                loss["loss"] += losses["top_loss"].item()
+                loss["loss"] += losses["front_loss"].item()
 
             num_batches += 1
-        
-        # if(self.opt.type == "both" or self.opt.type == "topview"):
-        #     loss["loss"] += loss["top_loss"].item() 
-        # if(self.opt.type == "both" or self.opt.type == "frontview"):
-        #     loss["loss"] += loss["front_loss"].item() 
-        
+
         for key in loss.keys():
             loss[key] = loss[key]/num_batches
         
