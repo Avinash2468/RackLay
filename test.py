@@ -57,8 +57,8 @@ def sequence_readlines(filename , seq_len):
     return sequence_files
 
 def save_topview(idx, tv_temp, name_dest_im):
-    print("PRINTING THE TEST OUTPUT SHAPE")
-    print(tv_temp.shape)
+    # print("PRINTING THE TEST OUTPUT SHAPE")
+    # print(tv_temp.shape)
     for i in range(args.num_racks):
         tv = tv_temp[:,3*i:3*i+3,:,:]
         tv_np = tv.squeeze()
@@ -75,7 +75,7 @@ def save_topview(idx, tv_temp, name_dest_im):
             os.makedirs(dir_name)
         cv2.imwrite(name_dest_im + "rackno_" +str(i) + ".png", tv.cpu().numpy())
 
-    print("Saved prediction to {}".format(name_dest_im))
+    # print("Saved prediction to {}".format(name_dest_im))
 
 def npy_loader(path):
     return np.load(path,allow_pickle=True)
@@ -154,11 +154,12 @@ def test(args):
     # PREDICTING ON EACH SEQUENCE
     with torch.no_grad():
         for idx, seq in enumerate(sequences):
+            print("ON SEQ" , idx)
             #print(seq.shape)
             output_layouts = [] # append all outputs for this sequence here
             # predicting on each mini 8-sized sequence in this sequence
             for mini_idx, mini_seq in enumerate(seq):
-                print(mini_seq)
+                print(mini_idx , end='-')
                 output_name = os.path.splitext(mini_seq[-1])[0]
                 inputs = torch.empty(seq_len, 3, feed_width, feed_height)
                 for mini_frame_idx, mini_frame_seq in enumerate(mini_seq):
@@ -183,7 +184,7 @@ def test(args):
                         top_tv,
                         os.path.join("{}".format(output_name_top)))
 
-                    output_name_front = output_name.replace("topview/", "frontview/")
+                    output_name_front = output_name.replace("img/", "Results/frontview/")
                     save_topview(
                         idx,
                         front_tv,
@@ -204,6 +205,8 @@ def test(args):
                         idx,
                         tv,
                         os.path.join("{}".format(output_name_front)))
+            
+            print("SEQ DONE")
 
         print('-> Done!')    
 
