@@ -236,6 +236,7 @@ class Trainer:
     def temporal_readlines(self, filename):
         f = open(filename, "r")
         files = [k.split("\n")[:-1] for k in f.read().split(",")[:-1]]
+        print("NUM SEQUENCES - " , len(files))
         temporal_files = []
         for seq_files in files:
             seq_files = [seq_files[0]]*self.opt.seq_len + seq_files
@@ -275,6 +276,7 @@ class Trainer:
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.train_loader)):
             # print("BATCH" , batch_idx)
             outputs, losses = self.process_batch(inputs)
+            # print(outputs['frontview'].shape)
             lossess = self.model.step(inputs, outputs, losses, self.epoch)
         
             if(self.opt.type == "both" or self.opt.type == "topview"):

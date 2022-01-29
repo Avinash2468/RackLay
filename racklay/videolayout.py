@@ -107,17 +107,25 @@ class Encoder(nn.Module):
         #x = self.pool(self.conv1(x))
         #x = self.conv2(x)
         #x = self.pool(x) 
+
         batch_size, seq_len, c, h, w = x.shape
         x = x.view(batch_size*seq_len, c, h, w)
+        # print("GOING IN ENCODER SHAPE" , x.shape)
         x = self.resnet_encoder(x)[-1]
-        x = self.pool(self.conv1(x))
-        x = self.conv2(x)
+        # print("AFTER RESNET ENCODER SHAPE IS" , x.shape)
+        # x = self.pool(self.conv1(x))
+        # x = self.conv2(x)
+        ##x = self.pool(x)
+        # x = self.relu(x)
+        # print("AFTER POOL CONV AND RELU SHAPE IS" , x.shape)
+        # mu, logvar = self.mu_conv(x), self.logvar_conv(x)
+        # print("MU SHAPE IS" , mu.shape)
+        # mu, logvar = mu.view(batch_size, seq_len, 128, 8, 8), logvar.view(batch_size, seq_len, 128, 8, 8)
+        
         #x = self.pool(x)
-        x = self.relu(x)
-        mu, logvar = self.mu_conv(x), self.logvar_conv(x)
-        mu, logvar = mu.view(batch_size, seq_len, 128, 8, 8), logvar.view(batch_size, seq_len, 128, 8, 8)
-        #x = self.pool(x)
-        return mu, logvar
+        x = x.view(batch_size , seq_len , x.shape[1] , x.shape[2] , x.shape[3])
+        # return mu, logvar
+        return x
 
 class Decoder(nn.Module):
     """ Encodes the Image into low-dimensional feature representation
@@ -137,14 +145,14 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.num_output_channels = num_out_ch
         self.num_ch_enc = num_ch_enc
-        self.num_ch_dec = np.array([4,8,16, 32, 64, 128, 256]) 
+        self.num_ch_dec = np.array([16, 32, 64, 128, 256 , 512]) 
         self.oct_map_size = oct_map_size
         self.pool = nn.MaxPool2d(2)
         # decoder
         self.convs = OrderedDict()
-        for i in range(6, -1, -1):
+        for i in range(5, -1, -1):
             # upconv_0
-            num_ch_in = 128 if i == 6 else self.num_ch_dec[i + 1]
+            num_ch_in = 512 if i == 5 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
             self.convs[("upconv", i, 0)] = nn.Conv2d(
                 num_ch_in, num_ch_out, 3, 1, 1)
@@ -178,16 +186,16 @@ class Decoder(nn.Module):
             Batch of output Layouts
             | Shape: (batch_size, 2, occ_map_size, occ_map_size)
         """
-        # print("BEFORE DECODER" , x.shape)
-        for i in range(6, -1, -1):
-            # print(x.shape)
+        # print("GOING IN DECODER" , x.shape)
+        for i in range(5, -1, -1):
+            # print("ITERATION",i,x.shape)
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
             x = self.convs[("relu", i, 0)](x)
             x = upsample(x)
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
-            # print(x.shape)
+            # print("BECAME" , x.shape)
         
         # print("AFTER INITIAL CONV" , x.shape)
         x = self.pool(x)
@@ -263,7 +271,7 @@ class VideoLayout(nn.Module):
         # checkM()
         self.encoder = Encoder(18, self.opt.height, self.opt.width, True)
         # checkM()
-        self.convlstm = ConvLSTM((8, 8), 128, 128, (3, 3), 1)
+        self.convlstm = ConvLSTM((16, 16), 512, 512, (3, 3), 1)
         # checkM()
         if self.opt.type == "both":
             self.top_decoder = Decoder(
@@ -323,10 +331,12 @@ class VideoLayout(nn.Module):
 
     def forward(self, x, is_training=True):
         outputs = {}
-        mu, logvar = self.encoder(x)
-        z = self.reparameterize(is_training, mu, logvar)
+        # mu, logvar = self.encoder(x)
+        # z = self.reparameterize(is_training, mu, logvar)
+        z = self.encoder(x)
+        # print("FINAL OUT OF ENCODER SHAPE IS" , z.shape)
         z = self.convlstm(z)[0][0][:,-1]
-        # print(z.shape)
+        # print("AFTER CONVLSTM SHAPE IS",z.shape)
         if self.opt.type == "both":
             outputs["topview"] = self.top_decoder(z)
             outputs["frontview"] = self.front_decoder(z)
@@ -335,6 +345,8 @@ class VideoLayout(nn.Module):
             # print("OUTPUT AFTER DECODER",outputs["topview"].shape)
         elif self.opt.type == "frontview":
             outputs["frontview"] = self.front_decoder(z) 
+        
+        # print("AFTER DECODER SHAPE IS" , outputs["frontview"].shape)
         return outputs
 
     def reparameterize(self, is_training, mu, logvar):
