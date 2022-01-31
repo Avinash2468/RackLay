@@ -101,7 +101,7 @@ def test(args):
         v in encoder_dict.items() if k in models["encoder"].state_dict()}
     models["encoder"].load_state_dict(filtered_dict_enc)
 
-    models["convlstm"] = videolayout.ConvLSTM((8, 8), 128, 128, (3, 3), 1)
+    models["convlstm"] = videolayout.ConvLSTM((16, 16), 512, 512, (3, 3), 1)
     convlstm_path = os.path.join(args.model_path, "convlstm.pth")
     models["convlstm"].load_state_dict(torch.load(convlstm_path, map_location=device))
     
@@ -171,7 +171,7 @@ def test(args):
                 inputs = inputs.unsqueeze(0)
 
                 input_seq = inputs.to(device)
-                mu, logvar = models["encoder"](input_seq)
+                mu = models["encoder"](input_seq)
                 z = mu
                 z = models["convlstm"](z)[0][0][:,-1]
 
