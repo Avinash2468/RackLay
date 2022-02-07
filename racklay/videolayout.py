@@ -88,7 +88,9 @@ class Encoder(nn.Module):
         self.mu_conv = Conv3x3(128, 128)
         self.logvar_conv = Conv3x3(128, 128)
 
-    def forward(self, x):
+        self.dropout = nn.Dropout2d(p=0.15)
+
+    def forward(self, x , is_training=True):
         """
 
         Parameters
@@ -111,7 +113,10 @@ class Encoder(nn.Module):
         batch_size, seq_len, c, h, w = x.shape
         x = x.view(batch_size*seq_len, c, h, w)
         # print("GOING IN ENCODER SHAPE" , x.shape)
-        x = self.resnet_encoder(x)[-1]
+        x = self.resnet_encoder(x , is_training=is_training)[-1]
+        if is_training:
+            x = self.dropout(x)
+        
         # print("AFTER RESNET ENCODER SHAPE IS" , x.shape)
         # x = self.pool(self.conv1(x))
         # x = self.conv2(x)
@@ -166,9 +171,11 @@ class Decoder(nn.Module):
 
         self.convs["topview"] = Conv3x3(
             self.num_ch_dec[0], self.num_output_channels)
-        self.dropout = nn.Dropout3d(0.2)
         self.decoder = nn.ModuleList(list(self.convs.values()))
 
+    def apply_dropout(self,p):
+        return nn.Dropout3d(p=p)
+    
     def forward(self, x, is_training=True):
         """
 
@@ -192,6 +199,8 @@ class Decoder(nn.Module):
             x = self.convs[("upconv", i, 0)](x)
             x = self.convs[("norm", i, 0)](x)
             x = self.convs[("relu", i, 0)](x)
+            if is_training:
+                x = self.apply_dropout((6-i)*0.05)(x)
             x = upsample(x)
             x = self.convs[("upconv", i, 1)](x)
             x = self.convs[("norm", i, 1)](x)
@@ -333,18 +342,18 @@ class VideoLayout(nn.Module):
         outputs = {}
         # mu, logvar = self.encoder(x)
         # z = self.reparameterize(is_training, mu, logvar)
-        z = self.encoder(x)
+        z = self.encoder(x,is_training=is_training)
         # print("FINAL OUT OF ENCODER SHAPE IS" , z.shape)
         z = self.convlstm(z)[0][0][:,-1]
         # print("AFTER CONVLSTM SHAPE IS",z.shape)
         if self.opt.type == "both":
-            outputs["topview"] = self.top_decoder(z)
-            outputs["frontview"] = self.front_decoder(z)
+            outputs["topview"] = self.top_decoder(z,is_training=is_training)
+            outputs["frontview"] = self.front_decoder(z,is_training=is_training)
         elif self.opt.type == "topview":
-            outputs["topview"] = self.top_decoder(z)
+            outputs["topview"] = self.top_decoder(z,is_training=is_training)
             # print("OUTPUT AFTER DECODER",outputs["topview"].shape)
         elif self.opt.type == "frontview":
-            outputs["frontview"] = self.front_decoder(z) 
+            outputs["frontview"] = self.front_decoder(z,is_training=is_training) 
         
         # print("AFTER DECODER SHAPE IS" , outputs["frontview"].shape)
         return outputs

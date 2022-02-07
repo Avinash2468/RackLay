@@ -210,7 +210,7 @@ class Trainer:
                       (self.epoch, loss["front_loss"], loss["front_loss_discr"]))
 
             if self.epoch % self.opt.log_frequency == 0:
-                self.save_model()
+                self.save_model()  
                 
             if self.epoch % 2 == 0:
                 loss_val = self.validation()
@@ -253,13 +253,16 @@ class Trainer:
             inputs[key] = inpt.to(self.device)
 
         # print("INCOMING DIMENSIONS" , inputs["color"].shape)
-        outputs = self.model(inputs["color"])
+        if not validation:
+            outputs = self.model(inputs["color"])
+        else:
+            outputs = self.model(inputs["color"] , is_training=False)
         # print("OUTGOING OUTPUT" , end=" ")
         # for key in outputs.keys():
         #     print(outputs[key].shape , end=" ")
 
-        if validation:
-            return outputs
+        # if validation:
+        #     return outputs
         
         #print("PRINTING THE INPUT AND OUTPUT OCCUPANCY MAP SIZES")
         # print(inputs["topview"].size,outputs["topview"].size)
@@ -305,7 +308,7 @@ class Trainer:
         loss["loss"] = 0.0
         num_batches = 0
         for batch_idx, inputs in tqdm.tqdm(enumerate(self.val_loader)):
-            outputs, losses = self.process_batch(inputs)
+            outputs, losses = self.process_batch(inputs,validation=True)
 
             if(self.opt.type == "both" or self.opt.type == "topview"):
                 loss["top_loss"] += losses["top_loss"].item()

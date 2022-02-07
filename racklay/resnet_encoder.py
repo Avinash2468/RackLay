@@ -82,6 +82,8 @@ class ResnetEncoder(nn.Module):
                    50: models.resnet50,
                    101: models.resnet101,
                    152: models.resnet152}
+        
+        self.dropout = nn.Dropout2d(p=0.1)
 
         if num_layers not in resnets:
             raise ValueError(
@@ -117,7 +119,7 @@ class ResnetEncoder(nn.Module):
         plt.savefig("./testing.png")
         print("over2")
 
-    def forward(self, input_image):
+    def forward(self, input_image ,is_training=True):
     
         self.features = []
         x = (input_image - 0.45) / 0.225
@@ -131,6 +133,9 @@ class ResnetEncoder(nn.Module):
             self.encoder.maxpool(self.features[-1])))
         
         self.features.append(self.encoder.layer2(self.features[-1]))
+
+        if is_training:
+            self.features.append(self.dropout(self.features[-1]))
         
         self.features.append(self.encoder.layer3(self.features[-1]))
 
