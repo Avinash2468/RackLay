@@ -350,7 +350,7 @@ class Trainer:
         generated_top_view = outputs;       
         true_top_view = true_top_view.long()#.reshape(self.opt.batch_size, self.opt.occ_map_size, self.opt.occ_map_size)
 
-        loss = nn.CrossEntropyLoss(weight=torch.Tensor([1., 5., 5.]).cuda())
+        loss = nn.CrossEntropyLoss(weight=torch.Tensor([1., 5., 15.]).cuda())
         loss_list = []
         
         for i in range(self.opt.num_racks):
