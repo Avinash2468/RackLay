@@ -84,20 +84,19 @@ class Loader(data.Dataset):
 
 
     def get_image_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "%06d.jpg" % int(frame_index))
-        #img_path = os.path.join(root_dir, "front" + "%06d.npy" % int(frame_index))
+        img_path = os.path.join(frame_index)
 
         return img_path
 
     def get_top_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "top"+"%06d.npy" % int(frame_index))
+        img_path = os.path.join(frame_index)
 
-        return img_path
+        return img_path.replace("img/", "topLayouts/top").replace("png", "npy")
 
     def get_front_path(self, root_dir, frame_index):
-        img_path = os.path.join(root_dir, "front"+"%06d.npy" % int(frame_index))
+        img_path = os.path.join(frame_index)
 
-        return img_path
+        return img_path.replace("img/", "topLayouts/front").replace("png", "npy")
 
     def __len__(self):
         return len(self.filenames)

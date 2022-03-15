@@ -39,10 +39,9 @@ def get_args():
                         help="size of topview occupancy map")
     return parser.parse_args()
 
-
 def save_topview(idx, tv_temp, name_dest_im):
-    print("PRINTING THE TEST OUTPUT SHAPE")
-    print(tv_temp.shape)
+    # print("PRINTING THE TEST OUTPUT SHAPE")
+    # print(tv_temp.shape)
     for i in range(args.num_racks):
         tv = tv_temp[:,3*i:3*i+3,:,:]
         tv_np = tv.squeeze()
@@ -58,12 +57,18 @@ def save_topview(idx, tv_temp, name_dest_im):
             os.makedirs(dir_name)
         cv2.imwrite(name_dest_im + "rackno_" +str(i) + ".png", tv.cpu().numpy())
 
-    print("Saved prediction to {}".format(name_dest_im))
+    # print("Saved prediction to {}".format(name_dest_im))
 
 
 def npy_loader(path):
     return np.load(path,allow_pickle=True)
-    
+
+def readlines(filename):
+    """Read all the lines in a text file and return as a list
+    """
+    with open(filename, 'r') as f:
+        lines = f.read().splitlines()
+    return lines    
     
 def test(args):
     models = {}
@@ -108,30 +113,24 @@ def test(args):
         models[key].to(device)
         models[key].eval()
 
+    # if os.path.isfile(args.image_path):
+    #     # Only testing on a single image
+    #     paths = [args.image_path]
+    #     output_directory = os.path.dirname(args.image_path)
     if os.path.isfile(args.image_path):
-        # Only testing on a single image
-        paths = [args.image_path]
-        output_directory = os.path.dirname(args.image_path)
-    elif os.path.isdir(args.image_path):
         # Searching folder for images
-        paths = glob.glob(os.path.join(
-            args.image_path, '*.{}'.format(args.ext)))
-        output_directory = args.out_dir
-        try:
-            os.mkdir(output_directory)
-        except BaseException:
-            pass
+        paths = readlines(args.image_path)
     else:
         raise Exception(
             "Can not find args.image_path: {}".format(
                 args.image_path))
 
     print("-> Predicting on {:d} test images".format(len(paths)))
-
+    # print(paths)
     # PREDICTING ON EACH IMAGE IN TURN
     with torch.no_grad():
         for idx, image_path in enumerate(paths):
-
+            # print("Current path is:", image_path)
             # Load image and preprocess
             input_image = pil.open(image_path).convert('RGB')
             #img = npy_loader(image_path)
@@ -139,14 +138,15 @@ def test(args):
             original_width, original_height = input_image.size
             input_image = input_image.resize(
                 (feed_width, feed_height), pil.LANCZOS)
-            print("INPUT IMAGE SHAPE")
-            print(input_image.size)
+            # print("INPUT IMAGE SHAPE")
+            # print(input_image.size)
             input_image = transforms.ToTensor()(input_image).unsqueeze(0)
 
             # PREDICTION
             input_image = input_image.to(device)
             features = models["encoder"](input_image)
-            output_name = os.path.splitext(os.path.basename(image_path))[0]
+            output_name = image_path
+            # print("output_name", output_name)
             print(
                 "Processing {:d} of {:d} images- ".format(idx + 1, len(paths)))
             if args.type == "both":
@@ -154,43 +154,34 @@ def test(args):
                     features, is_training=False)
                 front_tv = models["front_decoder"](
                     features, is_training=False)
+                output_name_top = output_name.replace("img/", "Results/topview/")
+                # print("output_name_top: ", output_name_top)
                 save_topview(
                     idx,
                     top_tv,
-                    os.path.join(
-                        args.out_dir,
-                        "top",
-                        "{}".format(output_name)))
+                    os.path.join("{}".format(output_name_top)))
+                output_name_front = output_name.replace("img/", "Results/frontview/")
                 save_topview(
                     idx,
                     front_tv,
-                    os.path.join(
-                        args.out_dir,
-                        "front",
-                        "{}".format(output_name)))
+                    os.path.join("{}".format(output_name_front)))
             elif args.type == "topview":
                 tv = models["top_decoder"](features, is_training=False)
+                output_name_top = output_name.replace("img/", "Results/topview/")
                 save_topview(
                     idx,
                     tv,
-                    os.path.join(
-                        args.out_dir,
-                        args.type,
-                        "{}".format(output_name)))
+                    os.path.join("{}".format(output_name_top)))
             elif args.type == "frontview":
                 tv = models["front_decoder"](features, is_training=False)
+                output_name_front = output_name.replace("img/", "Results/frontview/")
                 save_topview(
                     idx,
                     tv,
-                    os.path.join(
-                        args.out_dir,
-                        args.type,
-                        "{}".format(output_name)))
+                    os.path.join("{}".format(output_name_front)))
 
     print('-> Done!')
-
 
 if __name__ == "__main__":
     args = get_args()
     test(args)
-
